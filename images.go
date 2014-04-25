@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -32,28 +33,10 @@ func (x *ImagesCommand) Execute(args []string) error {
 		return fmt.Errorf("error reading all input", err)
 	}
 
-	var images []Image
-	err = json.Unmarshal(stdin, &images)
-
-	if err != nil {
-		return fmt.Errorf("Error reading JSON: ", err)
-	}
+	images, err := parseJSON(stdin)
 
 	if imagesCommand.Dot {
-		fmt.Printf("digraph docker {\n")
-
-		for _, image := range images {
-			if image.ParentId == "" {
-				fmt.Printf(" base -> \"%s\" [style=invis]\n", truncate(image.Id))
-			} else {
-				fmt.Printf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId), truncate(image.Id))
-			}
-			if image.RepoTags[0] != "<none>:<none>" {
-				fmt.Printf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id), truncate(image.Id), strings.Join(image.RepoTags, "\\n"))
-			}
-		}
-
-		fmt.Printf(" base [style=invisible]\n}\n")
+		fmt.Printf(jsonToDot(images))
 	} else if imagesCommand.Tree {
 		fmt.Println("Tree output not implemented yet.")
 	}
@@ -63,6 +46,39 @@ func (x *ImagesCommand) Execute(args []string) error {
 
 func truncate(id string) string {
 	return id[0:12]
+}
+
+func parseJSON(rawJSON []byte) (*[]Image, error) {
+
+	var images []Image
+	err := json.Unmarshal(rawJSON, &images)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error reading JSON: ", err)
+	}
+
+	return &images, nil
+}
+
+func jsonToDot(images *[]Image) string {
+
+	var buffer bytes.Buffer
+	buffer.WriteString("digraph docker {\n")
+
+	for _, image := range *images {
+		if image.ParentId == "" {
+			buffer.WriteString(fmt.Sprintf(" base -> \"%s\" [style=invis]\n", truncate(image.Id)))
+		} else {
+			buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId), truncate(image.Id)))
+		}
+		if image.RepoTags[0] != "<none>:<none>" {
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id), truncate(image.Id), strings.Join(image.RepoTags, "\\n")))
+		}
+	}
+
+	buffer.WriteString(" base [style=invisible]\n}\n")
+
+	return buffer.String()
 }
 
 func init() {
