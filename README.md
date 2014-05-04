@@ -2,9 +2,10 @@
 
 Visualizing Docker Data
 
-This command takes the raw Docker JSON and visualizes it in various ways.  The
-only thing that works so far is [Graphviz](http://www.graphviz.org), but others
-will come.
+This command takes the raw Docker JSON and visualizes it in various ways.
+
+For image information, output can be formatted as
+[Graphviz](http://www.graphviz.org) or as a tree in the terminal.
 
 # Running
 
