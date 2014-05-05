@@ -68,15 +68,36 @@ func Test_Dot(t *testing.T) {
 }
 
 func Test_Tree(t *testing.T) {
+	treeJSON := `[ { "VirtualSize": 662553464, "Size": 0, "RepoTags": [ "foo:latest" ], "ParentId": "735f5db5626147582d2ae3f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Id": "c87be8e5e697c735f5db5626147582d2ae3f2088574c5faaf8d4d1bccab99470", "Created": 1386142123 }, { "VirtualSize": 682553464, "Size": 0, "RepoTags": [ "<none>:<none>" ], "ParentId": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Id": "626147582d2ae3735f5db5f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Created": 1386142123 }, { "VirtualSize": 712553464, "Size": 0, "RepoTags": [ "base:latest" ], "ParentId": "626147582d2ae3735f5db5f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Id": "574c5faaf8d4d1bccab994626147582d2ae3735f5db5f2c87be8e5e697c08870", "Created": 1386142123 }, { "VirtualSize": 752553464, "Size": 0, "RepoTags": [ "<none>:<none>" ], "ParentId": "574c5faaf8d4d1bccab994626147582d2ae3735f5db5f2c87be8e5e697c08870", "Id": "aaf8d4d1bccab994574c5f626147582d2ae3735f5db5f2c87be8e5e697c08870", "Created": 1386142123 }, { "VirtualSize": 662553464, "Size": 0, "RepoTags": [ "<none>:<none>" ], "ParentId": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Id": "735f5db5626147582d2ae3f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Created": 1386142123 }, { "VirtualSize": 662553464, "Size": 662553464, "RepoTags": [ "<none>:<none>" ], "ParentId": "", "Id": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Created": 1386114144 } ]`
+
 	treeTests := []TreeTest{
 		TreeTest{
-			json:       `[{ "VirtualSize": 662553464, "Size": 0, "RepoTags": [ "foo:latest" ], "ParentId": "735f5db5626147582d2ae3f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Id": "c87be8e5e697c735f5db5626147582d2ae3f2088574c5faaf8d4d1bccab99470", "Created": 1386142123 },{ "VirtualSize": 662553464, "Size": 0, "RepoTags": [ "<none>:<none>" ], "ParentId": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Id": "735f5db5626147582d2ae3f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Created": 1386142123 },{ "VirtualSize": 662553464, "Size": 662553464, "RepoTags": [ "<none>:<none>" ], "ParentId": "", "Id": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Created": 1386114144 }]`,
+			json:       treeJSON,
 			startImage: "",
 			noTrunc:    false,
 			regexps: []string{
 				`(?m)└─4c1208b690c6`,
 				`(?m)  └─735f5db56261`,
 				`(?m)    └─c87be8e5e697`,
+			},
+		},
+		TreeTest{
+			json:       treeJSON,
+			startImage: "626147582d2a",
+			noTrunc:    false,
+			regexps: []string{
+				`(?m)└─626147582d2a`,
+				`(?m)  └─574c5faaf8d4`,
+				`(?m)    └─aaf8d4d1bcca`,
+			},
+		},
+		TreeTest{
+			json:       treeJSON,
+			startImage: "base:latest",
+			noTrunc:    true,
+			regexps: []string{
+				`(?m)└─574c5faaf8d4d1bccab994626147582d2ae3735f5db5f2c87be8e5e697c08870`,
+				`(?m)  └─aaf8d4d1bccab994574c5f626147582d2ae3735f5db5f2c87be8e5e697c08870`,
 			},
 		},
 	}
