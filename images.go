@@ -34,7 +34,10 @@ func (x *ImagesCommand) Execute(args []string) error {
 		return fmt.Errorf("error reading all input", err)
 	}
 
-	images, err := parseJSON(stdin)
+	images, err := parseImagesJSON(stdin)
+	if err != nil {
+		return err
+	}
 
 	if imagesCommand.Dot {
 		fmt.Printf(jsonToDot(images))
@@ -157,7 +160,7 @@ func truncate(id string) string {
 	return id[0:12]
 }
 
-func parseJSON(rawJSON []byte) (*[]Image, error) {
+func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
 
 	var images []Image
 	err := json.Unmarshal(rawJSON, &images)

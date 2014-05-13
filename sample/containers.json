@@ -1,0 +1,42 @@
+[
+  {
+    "Status": "Exited (0) 9 seconds ago",
+    "Ports": [],
+    "Names": [
+      "/application2"
+    ],
+    "Image": "ubuntu:12.10",
+    "Id": "878602c44611115d52118edeb768fc62de8cfed8c3bdb8c5cd2e149cb1c20afa",
+    "Created": 1399985983,
+    "Command": "/bin/bash"
+  },
+  {
+    "Status": "Up 2 minutes",
+    "Ports": [],
+    "Names": [
+      "/application"
+    ],
+    "Image": "ubuntu:12.10",
+    "Id": "6a2fa6a3c2d43738a1b850a17b3da212970efce83d119da2707177d1e506567f",
+    "Created": 1399985012,
+    "Command": "/bin/bash"
+  },
+  {
+    "Status": "Up 4 minutes",
+    "Ports": [
+      {
+        "Type": "tcp",
+        "PublicPort": 6379
+      }
+    ],
+    "Names": [
+      "/application/db",
+      "/application2/db",
+      "/redis"
+    ],
+    "Image": "redis:latest",
+    "Id": "5d7e818a4ea3cf01bdf5e1fdaebf645e11469ba0e55a506cde31834732766421",
+    "Created": 1399984760,
+    "Command": "/usr/bin/redis-server"
+  }
+]

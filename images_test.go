@@ -18,7 +18,7 @@ type TreeTest struct {
 }
 
 func Test_BadJSON(t *testing.T) {
-	_, err := parseJSON([]byte(` "VirtualSize": 662553464, "Size": 662553464, "RepoTags": [ "<none>:<none>" ], "ParentId": "", "Id": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Created": 1386114144 }]`))
+	_, err := parseImagesJSON([]byte(` "VirtualSize": 662553464, "Size": 662553464, "RepoTags": [ "<none>:<none>" ], "ParentId": "", "Id": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Created": 1386114144 }]`))
 
 	if err == nil {
 		t.Error("invalid json did not cause an error")
@@ -50,7 +50,7 @@ func Test_Dot(t *testing.T) {
 	}
 
 	for _, dotTest := range dotTests {
-		im, _ := parseJSON([]byte(dotTest.json))
+		im, _ := parseImagesJSON([]byte(dotTest.json))
 		result := jsonToDot(im)
 
 		for _, regexp := range allRegex {
@@ -103,7 +103,7 @@ func Test_Tree(t *testing.T) {
 	}
 
 	for _, treeTest := range treeTests {
-		im, _ := parseJSON([]byte(treeTest.json))
+		im, _ := parseImagesJSON([]byte(treeTest.json))
 		result := jsonToTree(im, treeTest.startImage, treeTest.noTrunc)
 
 		for _, regexp := range compileRegexps(t, treeTest.regexps) {
