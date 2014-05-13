@@ -21,7 +21,7 @@ type Image struct {
 type ImagesCommand struct {
 	Dot        bool `short:"d" long:"dot" description:"Show image information as Graphviz dot."`
 	Tree       bool `short:"t" long:"tree" description:"Show image information as tree."`
-	NoTruncate bool `short:"n" long:"notrunc" description:"Don't truncate the image IDs."`
+	NoTruncate bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
 }
 
 var imagesCommand ImagesCommand
@@ -46,6 +46,8 @@ func (x *ImagesCommand) Execute(args []string) error {
 		}
 
 		fmt.Printf(jsonToTree(images, startImageArg, imagesCommand.NoTruncate))
+	} else {
+		return fmt.Errorf("Please specify either --dot or --tree")
 	}
 
 	return nil
