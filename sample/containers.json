@@ -3,7 +3,7 @@
     "Status": "Exited (0) 9 seconds ago",
     "Ports": [],
     "Names": [
-      "/application2"
+      "/app2"
     ],
     "Image": "ubuntu:12.10",
     "Id": "878602c44611115d52118edeb768fc62de8cfed8c3bdb8c5cd2e149cb1c20afa",
@@ -14,7 +14,7 @@
     "Status": "Up 2 minutes",
     "Ports": [],
     "Names": [
-      "/application"
+      "/app1"
     ],
     "Image": "ubuntu:12.10",
     "Id": "6a2fa6a3c2d43738a1b850a17b3da212970efce83d119da2707177d1e506567f",
@@ -30,8 +30,8 @@
       }
     ],
     "Names": [
-      "/application/db",
-      "/application2/db",
+      "/app1/db",
+      "/app2/db",
       "/redis"
     ],
     "Image": "redis:latest",

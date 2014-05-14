@@ -1,0 +1,37 @@
+digraph docker {
+ "0fe9a2bc50fe" -> "8c32832f07ba"
+ "cc4e1358bc80" -> "5c0d04fba9df"
+ "5c0d04fba9df" [label="5c0d04fba9df\nnate/mongodb:latest",shape=box,fillcolor="paleturquoise",style="filled,rounded"];
+ "67b8b7262a67" -> "0fe9a2bc50fe"
+ "2f96171d2098" -> "67b8b7262a67"
+ "8c32832f07ba" -> "cc4e1358bc80"
+ "89541b3b35f2" -> "7dac4e98548e"
+ "341d0cc3fac8" -> "2f96171d2098"
+ "7dac4e98548e" -> "341d0cc3fac8"
+ "59dac4bae93b" -> "89541b3b35f2"
+ "d0525208a46c" -> "59dac4bae93b"
+ "e18d8001204e" -> "d0525208a46c"
+ "a7cf8ae4e998" -> "e18d8001204e"
+ "0cd8e7f50270" -> "594b6f8e6f92"
+ "594b6f8e6f92" -> "f832a63e87a4"
+ "f832a63e87a4" [label="f832a63e87a4\nredis:latest",shape=box,fillcolor="paleturquoise",style="filled,rounded"];
+ "398d592f2009" -> "0cd8e7f50270"
+ "a7cf8ae4e998" -> "398d592f2009"
+ "5dbd9cb5a02f" -> "74fe38d11401"
+ "74fe38d11401" [label="74fe38d11401\nubuntu:12.04\nubuntu:precise",shape=box,fillcolor="paleturquoise",style="filled,rounded"];
+ "82cdea7ab5b5" -> "5dbd9cb5a02f"
+ "f10ebce2c0e1" -> "82cdea7ab5b5"
+ "511136ea3c5a" -> "f10ebce2c0e1"
+ "cf8dc907452c" -> "a7cf8ae4e998"
+ "a7cf8ae4e998" [label="a7cf8ae4e998\nubuntu:12.10\nubuntu:quantal",shape=box,fillcolor="paleturquoise",style="filled,rounded"];
+ "ef519c9ee91a" -> "07302703becc"
+ "07302703becc" -> "cf8dc907452c"
+ "511136ea3c5a" -> "ef519c9ee91a"
+ "cb12405ee8fa" -> "316b678ddf48"
+ "316b678ddf48" [label="316b678ddf48\nubuntu:13.04\nubuntu:raring",shape=box,fillcolor="paleturquoise",style="filled,rounded"];
+ "e7206bfc66aa" -> "cb12405ee8fa"
+ "02dae1c13f51" -> "e7206bfc66aa"
+ "511136ea3c5a" -> "02dae1c13f51"
+ base -> "511136ea3c5a" [style=invis]
+ base [style=invisible]
+}

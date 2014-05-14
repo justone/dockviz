@@ -1,0 +1,7 @@
+digraph docker {
+ "app2" [label="app2\n878602c44611",shape=box,fillcolor="lightgrey",style="filled,rounded"];
+ "app1" [label="app1\n6a2fa6a3c2d4",shape=box,fillcolor="paleturquoise",style="filled,rounded"];
+ "redis" -> "app1" [label = " db" ]
+ "redis" -> "app2" [label = " db" ]
+ "redis" [label="redis\n5d7e818a4ea3",shape=box,fillcolor="paleturquoise",style="filled,rounded"];
+}
