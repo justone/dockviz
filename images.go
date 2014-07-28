@@ -106,9 +106,9 @@ func WalkTree(buffer *bytes.Buffer, noTrunc bool, images []Image, byParent map[s
 					WalkTree(buffer, noTrunc, subimages, byParent, prefix+"  ")
 				}
 			} else {
-				PrintTreeNode(buffer, noTrunc, image, prefix+"|─")
+				PrintTreeNode(buffer, noTrunc, image, prefix+"├─")
 				if subimages, exists := byParent[image.Id]; exists {
-					WalkTree(buffer, noTrunc, subimages, byParent, prefix+"| ")
+					WalkTree(buffer, noTrunc, subimages, byParent, prefix+"│ ")
 				}
 			}
 		}
