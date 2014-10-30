@@ -64,7 +64,8 @@ Or as a tree in the terminal:
 When docker is listening on the TCP port:
 
 ```
-$ curl -s http://localhost:4243/images/json?all=1 | dockviz images --dot | dot -Tpng -o images.png
+$ curl -s http://localhost:4243/images/json?all=1 | dockviz images --tree
+$ curl -s http://localhost:4243/containers/json?all=1 | dockviz containers --dot | dot -Tpng -o containers.png
 ```
 
 ## Socket
@@ -72,7 +73,8 @@ $ curl -s http://localhost:4243/images/json?all=1 | dockviz images --dot | dot -
 When docker is listening on the socket:
 
 ```
-echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | tail -n +5 | dockviz images --tree
+$ echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | tail -n +5 | dockviz images --tree
+$ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | tail -n +5 | dockviz containers --dot | dot -Tpng -o containers.png
 ```
 
 ## Direct from Docker
