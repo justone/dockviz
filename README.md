@@ -59,11 +59,25 @@ Or as a tree in the terminal:
 
 # Running
 
-Currently, this only works when the remote API is listening on TCP.  Soon, the Docker command line will allow dumping the image JSON.
+## TCP
+
+When docker is listening on the TCP port:
 
 ```
-$ curl -s http://localhost:4243/images/json?all=1 | ./dockviz images --dot | dot -Tpng -o images.png
+$ curl -s http://localhost:4243/images/json?all=1 | dockviz images --dot | dot -Tpng -o images.png
 ```
+
+## Socket
+
+When docker is listening on the socket:
+
+```
+echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | tail -n +5 | dockviz images --tree
+```
+
+## Direct from Docker
+
+Someday soon the Docker command line will allow dumping the image and container JSON directly.
 
 # Download
 
