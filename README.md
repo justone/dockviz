@@ -84,3 +84,11 @@ Someday soon the Docker command line will allow dumping the image and container 
 # Download
 
 For now, download binaries from Gobuild: <http://gobuild.io/download/github.com/justone/dockviz>
+
+# Build
+
+```bash
+go get github.com/jessevdk/go-flags
+go build
+```
+
