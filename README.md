@@ -81,10 +81,6 @@ $ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock
 
 Someday soon the Docker command line will allow dumping the image and container JSON directly.
 
-# Download
-
-For now, download binaries from Gobuild: <http://gobuild.io/download/github.com/justone/dockviz>
-
 # Build
 
 ```bash
