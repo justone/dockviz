@@ -77,6 +77,8 @@ $ echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | t
 $ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | tail -n +5 | dockviz containers --dot | dot -Tpng -o containers.png
 ```
 
+GNU netcat doesn't support `-U` (UNIX socket) flag, so OpenBSD variant can be used.
+
 ## Direct from Docker
 
 Someday soon the Docker command line will allow dumping the image and container JSON directly.
