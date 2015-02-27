@@ -10,6 +10,11 @@ type DotTest struct {
 	regexps []string
 }
 
+type ShortTest struct {
+	json    string
+	regexps []string
+}
+
 type TreeTest struct {
 	json       string
 	startImage string
@@ -109,6 +114,31 @@ func Test_Tree(t *testing.T) {
 		for _, regexp := range compileRegexps(t, treeTest.regexps) {
 			if !regexp.MatchString(result) {
 				t.Fatalf("images tree content '%s' did not match regexp '%s'", result, regexp)
+			}
+		}
+	}
+}
+
+func Test_Short(t *testing.T) {
+	shortJSON := `[ { "VirtualSize": 662553464, "Size": 0, "RepoTags": [ "foo:latest" ], "ParentId": "735f5db5626147582d2ae3f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Id": "c87be8e5e697c735f5db5626147582d2ae3f2088574c5faaf8d4d1bccab99470", "Created": 1386142123 }, { "VirtualSize": 682553464, "Size": 0, "RepoTags": [ "foo:1.0" ], "ParentId": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Id": "626147582d2ae3735f5db5f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Created": 1386142123 }, { "VirtualSize": 712553464, "Size": 0, "RepoTags": [ "foo:2.0" ], "ParentId": "626147582d2ae3735f5db5f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Id": "574c5faaf8d4d1bccab994626147582d2ae3735f5db5f2c87be8e5e697c08870", "Created": 1386142123 }, { "VirtualSize": 752553464, "Size": 0, "RepoTags": [ "private.repo.com:5000:latest" ], "ParentId": "574c5faaf8d4d1bccab994626147582d2ae3735f5db5f2c87be8e5e697c08870", "Id": "aaf8d4d1bccab994574c5f626147582d2ae3735f5db5f2c87be8e5e697c08870", "Created": 1386142123 }, { "VirtualSize": 662553464, "Size": 0, "RepoTags": [ "<none>:<none>" ], "ParentId": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Id": "735f5db5626147582d2ae3f2c87be8e5e697c088574c5faaf8d4d1bccab99470", "Created": 1386142123 }, { "VirtualSize": 662553464, "Size": 662553464, "RepoTags": [ "<none>:<none>" ], "ParentId": "", "Id": "4c1208b690c68af3476b437e7bc2bcc460f062bda2094d2d8f21a7e70368d358", "Created": 1386114144 } ]`
+
+	shortTests := []ShortTest{
+		ShortTest{
+			json: shortJSON,
+			regexps: []string{
+				`(?m)foo: latest, 1.0, 2.0`,
+				`(?m)private.repo.com:5000: latest`,
+			},
+		},
+	}
+
+	for _, shortTest := range shortTests {
+		im, _ := parseImagesJSON([]byte(shortTest.json))
+		result := jsonToShort(im)
+
+		for _, regexp := range compileRegexps(t, shortTest.regexps) {
+			if !regexp.MatchString(result) {
+				t.Fatalf("images short content '%s' did not match regexp '%s'", result, regexp)
 			}
 		}
 	}

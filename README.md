@@ -5,7 +5,7 @@ Visualizing Docker Data
 This command takes the raw Docker JSON and visualizes it in various ways.
 
 For image information, output can be formatted as
-[Graphviz](http://www.graphviz.org) or as a tree in the terminal.
+[Graphviz](http://www.graphviz.org), as a tree in the terminal, or in a short summary.
 
 For container information, only Graphviz output has been implemented.
 
@@ -22,6 +22,14 @@ Currently, containers are visualized with labeled lines for links.  Containers t
 Image info is visualized with lines indicating parent images:
 
 ![](sample/images.png "Image")
+
+Or in short form:
+
+```
+nate/mongodb: latest
+redis: latest
+ubuntu: 12.04, precise, 12.10, quantal, 13.04, raring
+```
 
 Or as a tree in the terminal:
 

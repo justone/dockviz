@@ -21,6 +21,7 @@ type Image struct {
 type ImagesCommand struct {
 	Dot        bool `short:"d" long:"dot" description:"Show image information as Graphviz dot."`
 	Tree       bool `short:"t" long:"tree" description:"Show image information as tree."`
+	Short      bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
 	NoTruncate bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
 }
 
@@ -49,8 +50,10 @@ func (x *ImagesCommand) Execute(args []string) error {
 		}
 
 		fmt.Printf(jsonToTree(images, startImageArg, imagesCommand.NoTruncate))
+	} else if imagesCommand.Short {
+		fmt.Printf(jsonToShort(images))
 	} else {
-		return fmt.Errorf("Please specify either --dot or --tree")
+		return fmt.Errorf("Please specify either --dot, --tree, or --short")
 	}
 
 	return nil
@@ -189,6 +192,37 @@ func jsonToDot(images *[]Image) string {
 	}
 
 	buffer.WriteString(" base [style=invisible]\n}\n")
+
+	return buffer.String()
+}
+
+func jsonToShort(images *[]Image) string {
+	var buffer bytes.Buffer
+
+	var byRepo = make(map[string][]string)
+
+	for _, image := range *images {
+		for _, repotag := range image.RepoTags {
+			if repotag != "<none>:<none>" {
+
+				// parse the repo name and tag name out
+				// tag is after the last colon
+				lastColonIndex := strings.LastIndex(repotag, ":")
+				tagname := repotag[lastColonIndex+1:]
+				reponame := repotag[0:lastColonIndex]
+
+				if tags, exists := byRepo[reponame]; exists {
+					byRepo[reponame] = append(tags, tagname)
+				} else {
+					byRepo[reponame] = []string{tagname}
+				}
+			}
+		}
+	}
+
+	for repo, tags := range byRepo {
+		buffer.WriteString(fmt.Sprintf("%s: %s\n", repo, strings.Join(tags, ", ")))
+	}
 
 	return buffer.String()
 }
