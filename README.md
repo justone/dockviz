@@ -83,10 +83,14 @@ GNU netcat doesn't support `-U` (UNIX socket) flag, so OpenBSD variant can be us
 
 Someday soon the Docker command line will allow dumping the image and container JSON directly.
 
+# Binaries
+
+See the [releases](https://github.com/justone/dockviz/releases) area for binaries.
+
 # Build
 
 ```bash
-go get github.com/jessevdk/go-flags
+go get ./...
 go build
 ```
 
