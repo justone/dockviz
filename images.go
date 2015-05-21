@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"strings"
 )
 
@@ -53,27 +52,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 
 	} else {
 
-		// grab directly from docker daemon
-		endpoint := os.Getenv("DOCKER_HOST")
-		if len(endpoint) == 0 {
-			endpoint = "unix:///var/run/docker.sock"
-		}
-
-		var client *docker.Client
-		if dockerCertPath := os.Getenv("DOCKER_CERT_PATH"); len(dockerCertPath) > 0 {
-			cert := path.Join(dockerCertPath, "cert.pem")
-			key := path.Join(dockerCertPath, "key.pem")
-			ca := path.Join(dockerCertPath, "ca.pem")
-			client, err = docker.NewTLSClient(endpoint, cert, key, ca)
-			if err != nil {
-				return err
-			}
-		} else {
-			client, err = docker.NewClient(endpoint)
-			if err != nil {
-				return err
-			}
-		}
+		client, err := connect()
 
 		clientImages, err := client.ListImages(docker.ListImagesOptions{All: true})
 		if err != nil {
