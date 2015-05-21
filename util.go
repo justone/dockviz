@@ -11,8 +11,13 @@ import (
 func connect() (*docker.Client, error) {
 
 	// grab directly from docker daemon
-	endpoint := os.Getenv("DOCKER_HOST")
-	if len(endpoint) == 0 {
+	var endpoint string
+	if env_endpoint := os.Getenv("DOCKER_HOST"); len(env_endpoint) > 0 {
+		endpoint = env_endpoint
+	} else if len(globalOptions.Host) > 0 {
+		endpoint = globalOptions.Host
+	} else {
+		// assume local socket
 		endpoint = "unix:///var/run/docker.sock"
 	}
 

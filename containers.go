@@ -51,6 +51,9 @@ func (x *ContainersCommand) Execute(args []string) error {
 	} else {
 
 		client, err := connect()
+		if err != nil {
+			return err
+		}
 
 		clientContainers, err := client.ListContainers(docker.ListContainersOptions{All: true})
 		if err != nil {
