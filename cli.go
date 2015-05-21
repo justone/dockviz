@@ -7,7 +7,10 @@ import (
 )
 
 type GlobalOptions struct {
-	// no options yet
+	TLSCaCert string `long:"tlscacert" value-name:"~/.docker/ca.pem" description:"Trust certs signed only by this CA"`
+	TLSCert   string `long:"tlscert" value-name:"~/.docker/cert.pem" description:"Path to TLS certificate file"`
+	TLSKey    string `long:"tlskey" value-name:"~/.docker/key.pem" description:"Path to TLS key file"`
+	TLSVerify bool   `long:"tlsverify" description:"Use TLS and verify the remote"`
 }
 
 var globalOptions GlobalOptions

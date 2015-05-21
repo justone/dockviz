@@ -53,6 +53,9 @@ func (x *ImagesCommand) Execute(args []string) error {
 	} else {
 
 		client, err := connect()
+		if err != nil {
+			return err
+		}
 
 		clientImages, err := client.ListImages(docker.ListImagesOptions{All: true})
 		if err != nil {
