@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/fsouza/go-dockerclient"
+
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -29,15 +31,51 @@ var imagesCommand ImagesCommand
 
 func (x *ImagesCommand) Execute(args []string) error {
 
-	// read in stdin
-	stdin, err := ioutil.ReadAll(os.Stdin)
+	var images *[]Image
+
+	stat, err := os.Stdin.Stat()
 	if err != nil {
-		return fmt.Errorf("error reading all input", err)
+		return fmt.Errorf("error reading stdin stat", err)
 	}
 
-	images, err := parseImagesJSON(stdin)
-	if err != nil {
-		return err
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		// read in stdin
+		stdin, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("error reading all input", err)
+		}
+
+		images, err = parseImagesJSON(stdin)
+		if err != nil {
+			return err
+		}
+
+	} else {
+
+		client, err := connect()
+		if err != nil {
+			return err
+		}
+
+		clientImages, err := client.ListImages(docker.ListImagesOptions{All: true})
+		if err != nil {
+			return err
+		}
+
+		var ims []Image
+		for _, image := range clientImages {
+			// fmt.Println(image)
+			ims = append(ims, Image{
+				image.ID,
+				image.ParentID,
+				image.RepoTags,
+				image.VirtualSize,
+				image.Size,
+				image.Created,
+			})
+		}
+
+		images = &ims
 	}
 
 	if imagesCommand.Dot {

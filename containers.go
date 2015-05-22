@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/fsouza/go-dockerclient"
+
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -28,15 +30,50 @@ var containersCommand ContainersCommand
 
 func (x *ContainersCommand) Execute(args []string) error {
 
-	// read in stdin
-	stdin, err := ioutil.ReadAll(os.Stdin)
+	var containers *[]Container
+
+	stat, err := os.Stdin.Stat()
 	if err != nil {
-		return fmt.Errorf("error reading all input", err)
+		return fmt.Errorf("error reading stdin stat", err)
 	}
 
-	containers, err := parseContainersJSON(stdin)
-	if err != nil {
-		return err
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		// read in stdin
+		stdin, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("error reading all input", err)
+		}
+
+		containers, err = parseContainersJSON(stdin)
+		if err != nil {
+			return err
+		}
+	} else {
+
+		client, err := connect()
+		if err != nil {
+			return err
+		}
+
+		clientContainers, err := client.ListContainers(docker.ListContainersOptions{All: true})
+		if err != nil {
+			return err
+		}
+
+		var conts []Container
+		for _, container := range clientContainers {
+			conts = append(conts, Container{
+				container.ID,
+				container.Image,
+				container.Names,
+				apiPortToMap(container.Ports),
+				container.Created,
+				container.Status,
+				container.Command,
+			})
+		}
+
+		containers = &conts
 	}
 
 	if containersCommand.Dot {
@@ -46,6 +83,20 @@ func (x *ContainersCommand) Execute(args []string) error {
 	}
 
 	return nil
+}
+
+func apiPortToMap(ports []docker.APIPort) []map[string]interface{} {
+	result := make([]map[string]interface{}, 2)
+	for _, port := range ports {
+		intPort := map[string]interface{}{
+			"IP":          port.IP,
+			"Type":        port.Type,
+			"PrivatePort": port.PrivatePort,
+			"PublicPort":  port.PublicPort,
+		}
+		result = append(result, intPort)
+	}
+	return result
 }
 
 func parseContainersJSON(rawJSON []byte) (*[]Container, error) {
