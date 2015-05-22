@@ -1,19 +1,24 @@
-# dockviz
+# dockviz: Visualizing Docker Data
 
-Visualizing Docker Data
+This command takes Docker image and container information and presents in
+different ways, to help you understand what's going on inside the system.
 
-This command takes the raw Docker JSON and visualizes it in various ways.
+# Quick Start
 
-For image information, output can be formatted as
-[Graphviz](http://www.graphviz.org), as a tree in the terminal, or in a short summary.
+1. Download the [latest release](https://github.com/justone/dockviz/releases).
+2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
 
-For container information, only Graphviz output has been implemented.
+Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
 
-# Examples
+# Output Examples
 
 ## Containers
 
 Currently, containers are visualized with labeled lines for links.  Containers that aren't running are greyed out.
+
+```
+$ dockviz containers -d | dot -Tpng -o containers.png
+```
 
 ![](sample/containers.png "Container")
 
@@ -21,11 +26,16 @@ Currently, containers are visualized with labeled lines for links.  Containers t
 
 Image info is visualized with lines indicating parent images:
 
+```
+$ dockviz images -d | dot -Tpng -o images.png
+```
+
 ![](sample/images.png "Image")
 
 Or in short form:
 
 ```
+$ dockviz images -s
 nate/mongodb: latest
 redis: latest
 ubuntu: 12.04, precise, 12.10, quantal, 13.04, raring
@@ -34,6 +44,7 @@ ubuntu: 12.04, precise, 12.10, quantal, 13.04, raring
 Or as a tree in the terminal:
 
 ```
+$ dockviz images -t
 └─511136ea3c5a Virtual Size: 0.0 B
   |─f10ebce2c0e1 Virtual Size: 103.7 MB
   | └─82cdea7ab5b5 Virtual Size: 103.9 MB
@@ -67,29 +78,21 @@ Or as a tree in the terminal:
 
 # Running
 
-## TCP
+Dockviz supports connecting to the Docker daemon directly.  It defaults to `unix:///var/run/docker.sock`, but respects the following as well:
 
-When docker is listening on the TCP port:
+* The `DOCKER_HOST`, `DOCKER_CERT_PATH`, and `DOCKER_TLS_VERIFY` environment variables, as set up by [boot2docker](http://boot2docker.io/) or [docker-machine](https://docs.docker.com/machine/).
+* Command line arguments (e.g. `--tlscacert`), like those that Docker itself supports.
+
+Dockviz also supports receiving Docker image or container json data on standard input.
 
 ```
 $ curl -s http://localhost:4243/images/json?all=1 | dockviz images --tree
 $ curl -s http://localhost:4243/containers/json?all=1 | dockviz containers --dot | dot -Tpng -o containers.png
-```
-
-## Socket
-
-When docker is listening on the socket:
-
-```
 $ echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | tail -n +5 | dockviz images --tree
 $ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | tail -n +5 | dockviz containers --dot | dot -Tpng -o containers.png
 ```
 
-GNU netcat doesn't support `-U` (UNIX socket) flag, so OpenBSD variant can be used.
-
-## Direct from Docker
-
-Someday soon the Docker command line will allow dumping the image and container JSON directly.
+Note: GNU netcat doesn't support `-U` (UNIX socket) flag, so OpenBSD variant can be used.
 
 # Binaries
 
@@ -101,4 +104,3 @@ See the [releases](https://github.com/justone/dockviz/releases) area for binarie
 go get ./...
 go build
 ```
-
