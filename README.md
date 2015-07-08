@@ -5,7 +5,13 @@ different ways, to help you understand what's going on inside the system.
 
 # Quick Start
 
-1. Download the [latest release](https://github.com/justone/dockviz/releases).
+1. Install dockviz.  Either:
+  * Download the [latest release](https://github.com/justone/dockviz/releases).
+  * Set up an alias to run it from the (5.8 MB) docker image: 
+
+  ```
+  alias dockviz="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
+  ```
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
 
 Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
