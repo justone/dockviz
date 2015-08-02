@@ -82,12 +82,46 @@ func (x *ImagesCommand) Execute(args []string) error {
 		fmt.Printf(jsonToDot(images))
 	} else if imagesCommand.Tree {
 
-		var startImageArg = ""
+		var startImage = ""
 		if len(args) > 0 {
-			startImageArg = args[0]
+
+			// attempt to find the start image, which can be specified as an
+			// image ID or a repository name
+
+			startImageArg := args[0]
+			startImageRepo := args[0]
+
+			// in case a repo name was specified, append ":latest" if it isn't
+			// already there
+			if !strings.HasSuffix(startImageRepo, ":latest") {
+				startImageRepo = fmt.Sprintf("%s:latest", startImageRepo)
+			}
+
+		IMAGES:
+			for _, image := range *images {
+				// check if the start image arg matches an image id
+				if strings.Index(image.Id, startImageArg) == 0 {
+					startImage = startImageArg
+					break IMAGES
+				}
+
+				// check if the start image arg matches an repository name
+				if image.RepoTags[0] != "<none>:<none>" {
+					for _, repotag := range image.RepoTags {
+						if repotag == startImageRepo {
+							startImage = image.Id
+							break IMAGES
+						}
+					}
+				}
+			}
+
+			if startImage == "" {
+				return fmt.Errorf("Unable to find image %s.", startImageArg)
+			}
 		}
 
-		fmt.Printf(jsonToTree(images, startImageArg, imagesCommand.NoTruncate))
+		fmt.Printf(jsonToTree(images, startImage, imagesCommand.NoTruncate))
 	} else if imagesCommand.Short {
 		fmt.Printf(jsonToShort(images))
 	} else {
