@@ -101,7 +101,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 			for _, image := range *images {
 				// check if the start image arg matches an image id
 				if strings.Index(image.Id, startImageArg) == 0 {
-					startImage = startImageArg
+					startImage = image.Id
 					break IMAGES
 				}
 
