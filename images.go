@@ -59,7 +59,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 
 		clientImages, err := client.ListImages(docker.ListImagesOptions{All: true})
 		if err != nil {
-			return err
+			return fmt.Errorf("Unable to connect: %s\nFor help, run 'dockviz help'", err)
 		}
 
 		var ims []Image

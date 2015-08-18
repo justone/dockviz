@@ -57,7 +57,7 @@ func (x *ContainersCommand) Execute(args []string) error {
 
 		clientContainers, err := client.ListContainers(docker.ListContainersOptions{All: true})
 		if err != nil {
-			return err
+			return fmt.Errorf("Unable to connect: %s\nFor help, run 'dockviz help'", err)
 		}
 
 		var conts []Container
