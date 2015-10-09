@@ -21,10 +21,11 @@ type Image struct {
 }
 
 type ImagesCommand struct {
-	Dot        bool `short:"d" long:"dot" description:"Show image information as Graphviz dot."`
-	Tree       bool `short:"t" long:"tree" description:"Show image information as tree."`
-	Short      bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
-	NoTruncate bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
+	Dot         bool `short:"d" long:"dot" description:"Show image information as Graphviz dot."`
+	Tree        bool `short:"t" long:"tree" description:"Show image information as tree."`
+	Short       bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
+	NoTruncate  bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
+	OnlyLabeled bool `short:"l" long:"only-labeled" description:"Print only labeled images/containers."`
 }
 
 var imagesCommand ImagesCommand
@@ -125,7 +126,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 			}
 		}
 
-		fmt.Printf(jsonToTree(images, startImage, imagesCommand.NoTruncate))
+		fmt.Printf(jsonToTree(images, startImage, imagesCommand.NoTruncate, imagesCommand.OnlyLabeled))
 	} else if imagesCommand.Short {
 		fmt.Printf(jsonToShort(images))
 	} else {
@@ -135,7 +136,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 	return nil
 }
 
-func jsonToTree(images *[]Image, startImageArg string, noTrunc bool) string {
+func jsonToTree(images *[]Image, startImageArg string, noTrunc bool, onlyLabeled bool) string {
 	var buffer bytes.Buffer
 
 	var startImage Image
@@ -167,35 +168,53 @@ func jsonToTree(images *[]Image, startImageArg string, noTrunc bool) string {
 	}
 
 	if startImageArg != "" {
-		WalkTree(&buffer, noTrunc, []Image{startImage}, byParent, "")
+		WalkTree(&buffer, noTrunc, onlyLabeled, []Image{startImage}, byParent, "")
 	} else {
-		WalkTree(&buffer, noTrunc, roots, byParent, "")
+		WalkTree(&buffer, noTrunc, onlyLabeled, roots, byParent, "")
 	}
 
 	return buffer.String()
 }
 
-func WalkTree(buffer *bytes.Buffer, noTrunc bool, images []Image, byParent map[string][]Image, prefix string) {
+func WalkTree(buffer *bytes.Buffer, noTrunc bool, onlyLabeled bool, images []Image, byParent map[string][]Image, prefix string) {
 	if len(images) > 1 {
 		length := len(images)
 		for index, image := range images {
 			if index+1 == length {
-				PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
+				if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+					PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
+				}
 				if subimages, exists := byParent[image.Id]; exists {
-					WalkTree(buffer, noTrunc, subimages, byParent, prefix+"  ")
+					if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+"  ")
+					} else {
+						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix)
+					} 
 				}
 			} else {
-				PrintTreeNode(buffer, noTrunc, image, prefix+"├─")
+				if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+					PrintTreeNode(buffer, noTrunc, image, prefix+"├─")
+				}
 				if subimages, exists := byParent[image.Id]; exists {
-					WalkTree(buffer, noTrunc, subimages, byParent, prefix+"│ ")
+					if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+"│ ")
+					} else {
+						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix)
+					}
 				}
 			}
 		}
 	} else {
 		for _, image := range images {
-			PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
+			if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+				PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
+			}
 			if subimages, exists := byParent[image.Id]; exists {
-				WalkTree(buffer, noTrunc, subimages, byParent, prefix+"  ")
+				if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+					WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+"  ")
+				} else {
+					WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix)
+				} 
 			}
 		}
 	}
