@@ -177,44 +177,34 @@ func jsonToTree(images *[]Image, startImageArg string, noTrunc bool, onlyLabeled
 }
 
 func WalkTree(buffer *bytes.Buffer, noTrunc bool, onlyLabeled bool, images []Image, byParent map[string][]Image, prefix string) {
-	if len(images) > 1 {
-		length := len(images)
+	var length = len(images)
+	if length > 1 {
 		for index, image := range images {
-			if index+1 == length {
-				if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+			var nextPrefix string = ""
+			var visible bool = onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled
+			if visible {
+				if index+1 == length {
 					PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
-				}
-				if subimages, exists := byParent[image.Id]; exists {
-					if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
-						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+"  ")
-					} else {
-						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix)
-					} 
-				}
-			} else {
-				if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+					nextPrefix = "  "
+				} else {
 					PrintTreeNode(buffer, noTrunc, image, prefix+"├─")
+					nextPrefix = "│ "
 				}
-				if subimages, exists := byParent[image.Id]; exists {
-					if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
-						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+"│ ")
-					} else {
-						WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix)
-					}
-				}
+			}
+			if subimages, exists := byParent[image.Id]; exists {
+				WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+nextPrefix)
 			}
 		}
 	} else {
 		for _, image := range images {
-			if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
+			var nextPrefix string = ""
+			var visible bool = onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled 
+			if visible {
 				PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
+				nextPrefix = "  "
 			}
 			if subimages, exists := byParent[image.Id]; exists {
-				if onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled {
-					WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+"  ")
-				} else {
-					WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix)
-				} 
+				WalkTree(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+nextPrefix)
 			}
 		}
 	}
