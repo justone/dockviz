@@ -92,37 +92,33 @@ func (x *ImagesCommand) Execute(args []string) error {
 
 			// attempt to find the start image, which can be specified as an
 			// image ID or a repository name
-
 			startImageArg := args[0]
 			startImageRepo := args[0]
 
-			// in case a repo name was specified, append ":latest" if it isn't
-			// already there
-			if !strings.HasSuffix(startImageRepo, ":latest") {
+			// if tag is not defined, find by :latest tag
+			if strings.Index(startImageRepo, ":") == -1 {
 				startImageRepo = fmt.Sprintf("%s:latest", startImageRepo)
 			}
 
 		IMAGES:
 			for _, image := range *images {
-				// check if the start image arg matches an image id
+				// find by image id
 				if strings.Index(image.Id, startImageArg) == 0 {
 					startImage = image.Id
 					break IMAGES
 				}
 
-				// check if the start image arg matches an repository name
-				if image.RepoTags[0] != "<none>:<none>" {
-					for _, repotag := range image.RepoTags {
-						if repotag == startImageRepo {
-							startImage = image.Id
-							break IMAGES
-						}
+				// find by image name (name and tag)
+				for _, repotag := range image.RepoTags {
+					if repotag == startImageRepo {
+						startImage = image.Id
+						break IMAGES
 					}
 				}
 			}
 
 			if startImage == "" {
-				return fmt.Errorf("Unable to find image %s.", startImageArg)
+				return fmt.Errorf("Unable to find image %s = %s.", startImageArg, startImageRepo)
 			}
 		}
 
@@ -181,7 +177,11 @@ func WalkTree(buffer *bytes.Buffer, noTrunc bool, onlyLabeled bool, images []Ima
 	if length > 1 {
 		for index, image := range images {
 			var nextPrefix string = ""
-			var visible bool = onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled
+			// image is visible 
+			//   1. it has a label
+			//   2. it is root
+			//   3. it is a node 
+			var visible bool = onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled || image.ParentId == "" || len(byParent[image.Id]) > 1
 			if visible {
 				if index+1 == length {
 					PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
@@ -198,7 +198,11 @@ func WalkTree(buffer *bytes.Buffer, noTrunc bool, onlyLabeled bool, images []Ima
 	} else {
 		for _, image := range images {
 			var nextPrefix string = ""
-			var visible bool = onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled 
+			// image is visible 
+			//   1. it has a label
+			//   2. it is root
+			//   3. it is a node 
+			var visible bool = onlyLabeled && image.RepoTags[0] != "<none>:<none>" || !onlyLabeled || image.ParentId == "" || len(byParent[image.Id]) > 1 
 			if visible {
 				PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
 				nextPrefix = "  "
