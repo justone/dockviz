@@ -142,7 +142,6 @@ func (x *ImagesCommand) Execute(args []string) error {
 		var buffer bytes.Buffer
 		
 		if imagesCommand.Tree {
-			buffer.WriteString(fmt.Sprintf("Images: %d\n", len(imagesByParent)))
 			jsonToText(&buffer, imagesCommand.NoTruncate, imagesCommand.OnlyLabeled, roots, imagesByParent, "") 
 		}
 		if imagesCommand.Dot {
