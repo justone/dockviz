@@ -142,7 +142,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 		var buffer bytes.Buffer
 		
 		if imagesCommand.Tree {
-			jsonToText(&buffer, imagesCommand.NoTruncate, imagesCommand.OnlyLabeled, roots, imagesByParent, "") 
+			jsonToText(&buffer, imagesCommand.NoTruncate, roots, imagesByParent, "") 
 		}
 		if imagesCommand.Dot {
 			imagesToDot(&buffer, images)
@@ -215,7 +215,7 @@ func filterImages (images *[]Image, byParent *map[string][]Image) (filteredImage
 	return filteredImages, filteredChildren
 }
 
-func jsonToText(buffer *bytes.Buffer, noTrunc bool, onlyLabeled bool, images []Image, byParent map[string][]Image, prefix string) {
+func jsonToText(buffer *bytes.Buffer, noTrunc bool, images []Image, byParent map[string][]Image, prefix string) {
 	var length = len(images)
 	if length > 1 {
 		for index, image := range images {
@@ -228,14 +228,14 @@ func jsonToText(buffer *bytes.Buffer, noTrunc bool, onlyLabeled bool, images []I
 				nextPrefix = "│ "
 			}
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+nextPrefix)
+				jsonToText(buffer, noTrunc, subimages, byParent, prefix+nextPrefix)
 			}
 		}
 	} else {
 		for _, image := range images {
 			PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, noTrunc, onlyLabeled, subimages, byParent, prefix+"  ")
+				jsonToText(buffer, noTrunc, subimages, byParent, prefix+"  ")
 			}
 		}
 	}
