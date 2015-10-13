@@ -21,11 +21,11 @@ type Image struct {
 }
 
 type ImagesCommand struct {
-	Dot         bool `short:"d" long:"dot" description:"Show image information as Graphviz dot."`
-	Tree        bool `short:"t" long:"tree" description:"Show image information as tree."`
-	Short       bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
-	NoTruncate  bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
-	OnlyLabeled bool `short:"l" long:"only-labeled" description:"Print only labeled images/containers."`
+	Dot          bool `short:"d" long:"dot" description:"Show image information as Graphviz dot. You can add a start image id or name -d/--dot [id/name]"`
+	Tree         bool `short:"t" long:"tree" description:"Show image information as tree. You can add a start image id or name -t/--tree [id/name]"`
+	Short        bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
+	NoTruncate   bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
+	OnlyLabelled bool `short:"l" long:"only-labelled" description:"Print only labelled images/containers."`
 }
 
 var imagesCommand ImagesCommand
@@ -136,7 +136,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 		// initialize image informations
 		
 		// filter images
-		if imagesCommand.OnlyLabeled{
+		if imagesCommand.OnlyLabelled{
 			*images, imagesByParent = filterImages(images, &imagesByParent)
 		}
 		
