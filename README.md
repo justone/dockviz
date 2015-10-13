@@ -91,6 +91,7 @@ $ dockviz images -t
       └─cb12405ee8fa Virtual Size: 98.5 MB
         └─316b678ddf48 Virtual Size: 169.4 MB Tags: ubuntu:13.04, ubuntu:raring
 ```
+```
 $ dockviz images -t -l
 └─511136ea3c5a Virtual Size: 0.0 B
   ├─f10ebce2c0e1 Virtual Size: 103.7 MB
@@ -101,6 +102,7 @@ $ dockviz images -t -l
   │   └─f832a63e87a4 Virtual Size: 243.6 MB Tags: redis:latest
   └─02dae1c13f51 Virtual Size: 98.3 MB
     └─316b678ddf48 Virtual Size: 169.4 MB Tags: ubuntu:13.04, ubuntu:raring
+```
 
 # Running
 
