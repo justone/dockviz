@@ -124,6 +124,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 		if startImage == nil {
 			roots = collectRoots(images)
 		} else {
+			startImage.ParentId = ""
 			roots = []Image{*startImage}
 		}
 		
@@ -145,7 +146,10 @@ func (x *ImagesCommand) Execute(args []string) error {
 			jsonToText(&buffer, imagesCommand.NoTruncate, roots, imagesByParent, "") 
 		}
 		if imagesCommand.Dot {
-			imagesToDot(&buffer, images)
+			buffer.WriteString("digraph docker {\n")
+			imagesToDot(&buffer, roots, imagesByParent)
+			buffer.WriteString(" base [style=invisible]\n}\n")
+			buffer.String()
 		}
 		
 		fmt.Print(buffer.String())
@@ -295,10 +299,8 @@ func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
 }
 
 
-func imagesToDot(buffer *bytes.Buffer, images *[]Image) string {
-	buffer.WriteString("digraph docker {\n")
-
-	for _, image := range *images {
+func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Image) {
+	for _, image := range images {
 		if image.ParentId == "" {
 			buffer.WriteString(fmt.Sprintf(" base -> \"%s\" [style=invis]\n", truncate(image.Id)))
 		} else {
@@ -307,11 +309,10 @@ func imagesToDot(buffer *bytes.Buffer, images *[]Image) string {
 		if image.RepoTags[0] != "<none>:<none>" {
 			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id), truncate(image.Id), strings.Join(image.RepoTags, "\\n")))
 		}
+		if subimages, exists := byParent[image.Id]; exists {
+			imagesToDot(buffer, subimages, byParent)
+		}
 	}
-
-	buffer.WriteString(" base [style=invisible]\n}\n")
-
-	return buffer.String()
 }
 
 
