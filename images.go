@@ -21,16 +21,16 @@ type Image struct {
 }
 
 type ImagesCommand struct {
-	Dot        bool `short:"d" long:"dot" description:"Show image information as Graphviz dot."`
-	Tree       bool `short:"t" long:"tree" description:"Show image information as tree."`
-	Short      bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
-	NoTruncate bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
+	Dot          bool `short:"d" long:"dot" description:"Show image information as Graphviz dot. You can add a start image id or name -d/--dot [id/name]"`
+	Tree         bool `short:"t" long:"tree" description:"Show image information as tree. You can add a start image id or name -t/--tree [id/name]"`
+	Short        bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
+	NoTruncate   bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
+	OnlyLabelled bool `short:"l" long:"only-labelled" description:"Print only labelled images/containers."`
 }
 
 var imagesCommand ImagesCommand
 
 func (x *ImagesCommand) Execute(args []string) error {
-
 	var images *[]Image
 
 	stat, err := os.Stdin.Stat()
@@ -82,50 +82,40 @@ func (x *ImagesCommand) Execute(args []string) error {
 		images = &ims
 	}
 
-	if imagesCommand.Dot {
-		fmt.Printf(jsonToDot(images))
-	} else if imagesCommand.Tree {
-
-		var startImage = ""
+	if imagesCommand.Tree || imagesCommand.Dot {
+		var startImage *Image
 		if len(args) > 0 {
+			startImage, err = findStartImage(args[0], images)
 
-			// attempt to find the start image, which can be specified as an
-			// image ID or a repository name
-
-			startImageArg := args[0]
-			startImageRepo := args[0]
-
-			// in case a repo name was specified, append ":latest" if it isn't
-			// already there
-			if !strings.HasSuffix(startImageRepo, ":latest") {
-				startImageRepo = fmt.Sprintf("%s:latest", startImageRepo)
-			}
-
-		IMAGES:
-			for _, image := range *images {
-				// check if the start image arg matches an image id
-				if strings.Index(image.Id, startImageArg) == 0 {
-					startImage = image.Id
-					break IMAGES
-				}
-
-				// check if the start image arg matches an repository name
-				if image.RepoTags[0] != "<none>:<none>" {
-					for _, repotag := range image.RepoTags {
-						if repotag == startImageRepo {
-							startImage = image.Id
-							break IMAGES
-						}
-					}
-				}
-			}
-
-			if startImage == "" {
-				return fmt.Errorf("Unable to find image %s.", startImageArg)
+			if err != nil {
+				return err
 			}
 		}
 
-		fmt.Printf(jsonToTree(images, startImage, imagesCommand.NoTruncate))
+		// select the start image of the tree
+		var roots []Image
+		if startImage == nil {
+			roots = collectRoots(images)
+		} else {
+			startImage.ParentId = ""
+			roots = []Image{*startImage}
+		}
+
+		// build helper map (image -> children)
+		imagesByParent := collectChildren(images)
+
+		// filter images
+		if imagesCommand.OnlyLabelled {
+			*images, imagesByParent = filterImages(images, &imagesByParent)
+		}
+
+		if imagesCommand.Tree {
+			fmt.Print(jsonToTree(imagesCommand.NoTruncate, roots, imagesByParent))
+		}
+		if imagesCommand.Dot {
+			fmt.Print(jsonToDot(roots, imagesByParent))
+		}
+
 	} else if imagesCommand.Short {
 		fmt.Printf(jsonToShort(images))
 	} else {
@@ -135,67 +125,137 @@ func (x *ImagesCommand) Execute(args []string) error {
 	return nil
 }
 
-func jsonToTree(images *[]Image, startImageArg string, noTrunc bool) string {
+func findStartImage(name string, images *[]Image) (*Image, error) {
+
+	var startImage *Image
+
+	// attempt to find the start image, which can be specified as an
+	// image ID or a repository name
+	startImageArg := name
+	startImageRepo := name
+
+	// if tag is not defined, find by :latest tag
+	if strings.Index(startImageRepo, ":") == -1 {
+		startImageRepo = fmt.Sprintf("%s:latest", startImageRepo)
+	}
+
+IMAGES:
+	for _, image := range *images {
+		// find by image id
+		if strings.Index(image.Id, startImageArg) == 0 {
+			startImage = &image
+			break IMAGES
+		}
+
+		// find by image name (name and tag)
+		for _, repotag := range image.RepoTags {
+			if repotag == startImageRepo {
+				startImage = &image
+				break IMAGES
+			}
+		}
+	}
+
+	if startImage == nil {
+		return nil, fmt.Errorf("Unable to find image %s = %s.", startImageArg, startImageRepo)
+	}
+
+	return startImage, nil
+}
+
+func jsonToTree(noTrunc bool, images []Image, byParent map[string][]Image) string {
 	var buffer bytes.Buffer
 
-	var startImage Image
-
-	var roots []Image
-	var byParent = make(map[string][]Image)
-	for _, image := range *images {
-		if image.ParentId == "" {
-			roots = append(roots, image)
-		} else {
-			if children, exists := byParent[image.ParentId]; exists {
-				byParent[image.ParentId] = append(children, image)
-			} else {
-				byParent[image.ParentId] = []Image{image}
-			}
-		}
-
-		if startImageArg != "" {
-			if startImageArg == image.Id || startImageArg == truncate(image.Id) {
-				startImage = image
-			}
-
-			for _, repotag := range image.RepoTags {
-				if repotag == startImageArg {
-					startImage = image
-				}
-			}
-		}
-	}
-
-	if startImageArg != "" {
-		WalkTree(&buffer, noTrunc, []Image{startImage}, byParent, "")
-	} else {
-		WalkTree(&buffer, noTrunc, roots, byParent, "")
-	}
+	jsonToText(&buffer, noTrunc, images, byParent, "")
 
 	return buffer.String()
 }
 
-func WalkTree(buffer *bytes.Buffer, noTrunc bool, images []Image, byParent map[string][]Image, prefix string) {
-	if len(images) > 1 {
-		length := len(images)
+func jsonToDot(roots []Image, byParent map[string][]Image) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("digraph docker {\n")
+	imagesToDot(&buffer, roots, byParent)
+	buffer.WriteString(" base [style=invisible]\n}\n")
+
+	return buffer.String()
+}
+
+func collectChildren(images *[]Image) map[string][]Image {
+	var imagesByParent = make(map[string][]Image)
+	for _, image := range *images {
+		if children, exists := imagesByParent[image.ParentId]; exists {
+			imagesByParent[image.ParentId] = append(children, image)
+		} else {
+			imagesByParent[image.ParentId] = []Image{image}
+		}
+	}
+
+	return imagesByParent
+}
+
+func collectRoots(images *[]Image) []Image {
+	var roots []Image
+	for _, image := range *images {
+		if image.ParentId == "" {
+			roots = append(roots, image)
+		}
+	}
+
+	return roots
+}
+
+func filterImages(images *[]Image, byParent *map[string][]Image) (filteredImages []Image, filteredChildren map[string][]Image) {
+	for i := 0; i < len(*images); i++ {
+		// image is visible
+		//   1. it has a label
+		//   2. it is root
+		//   3. it is a node
+		var visible bool = (*images)[i].RepoTags[0] != "<none>:<none>" || (*images)[i].ParentId == "" || len((*byParent)[(*images)[i].Id]) > 1
+		if visible {
+			filteredImages = append(filteredImages, (*images)[i])
+		} else {
+			// change childs parent id
+			// if items are filtered with only one child
+			for j := 0; j < len(filteredImages); j++ {
+				if filteredImages[j].ParentId == (*images)[i].Id {
+					filteredImages[j].ParentId = (*images)[i].ParentId
+				}
+			}
+			for j := 0; j < len(*images); j++ {
+				if (*images)[j].ParentId == (*images)[i].Id {
+					(*images)[j].ParentId = (*images)[i].ParentId
+				}
+			}
+		}
+	}
+
+	filteredChildren = collectChildren(&filteredImages)
+
+	return filteredImages, filteredChildren
+}
+
+func jsonToText(buffer *bytes.Buffer, noTrunc bool, images []Image, byParent map[string][]Image, prefix string) {
+	var length = len(images)
+	if length > 1 {
 		for index, image := range images {
+			var nextPrefix string = ""
 			if index+1 == length {
 				PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
-				if subimages, exists := byParent[image.Id]; exists {
-					WalkTree(buffer, noTrunc, subimages, byParent, prefix+"  ")
-				}
+				nextPrefix = "  "
 			} else {
 				PrintTreeNode(buffer, noTrunc, image, prefix+"├─")
-				if subimages, exists := byParent[image.Id]; exists {
-					WalkTree(buffer, noTrunc, subimages, byParent, prefix+"│ ")
-				}
+				nextPrefix = "│ "
+			}
+			if subimages, exists := byParent[image.Id]; exists {
+				jsonToText(buffer, noTrunc, subimages, byParent, prefix+nextPrefix)
 			}
 		}
 	} else {
 		for _, image := range images {
 			PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
 			if subimages, exists := byParent[image.Id]; exists {
-				WalkTree(buffer, noTrunc, subimages, byParent, prefix+"  ")
+				jsonToText(buffer, noTrunc, subimages, byParent, prefix+"  ")
 			}
 		}
 	}
@@ -251,12 +311,8 @@ func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
 	return &images, nil
 }
 
-func jsonToDot(images *[]Image) string {
-
-	var buffer bytes.Buffer
-	buffer.WriteString("digraph docker {\n")
-
-	for _, image := range *images {
+func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Image) {
+	for _, image := range images {
 		if image.ParentId == "" {
 			buffer.WriteString(fmt.Sprintf(" base -> \"%s\" [style=invis]\n", truncate(image.Id)))
 		} else {
@@ -265,11 +321,10 @@ func jsonToDot(images *[]Image) string {
 		if image.RepoTags[0] != "<none>:<none>" {
 			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id), truncate(image.Id), strings.Join(image.RepoTags, "\\n")))
 		}
+		if subimages, exists := byParent[image.Id]; exists {
+			imagesToDot(buffer, subimages, byParent)
+		}
 	}
-
-	buffer.WriteString(" base [style=invisible]\n}\n")
-
-	return buffer.String()
 }
 
 func jsonToShort(images *[]Image) string {
