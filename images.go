@@ -110,7 +110,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 		}
 
 		if imagesCommand.Tree {
-			fmt.Print(jsonToTree(imagesCommand.NoTruncate, roots, imagesByParent))
+			fmt.Print(jsonToTree(roots, imagesByParent, imagesCommand.NoTruncate))
 		}
 		if imagesCommand.Dot {
 			fmt.Print(jsonToDot(roots, imagesByParent))
@@ -163,10 +163,10 @@ IMAGES:
 	return startImage, nil
 }
 
-func jsonToTree(noTrunc bool, images []Image, byParent map[string][]Image) string {
+func jsonToTree(images []Image, byParent map[string][]Image, noTrunc bool) string {
 	var buffer bytes.Buffer
 
-	jsonToText(&buffer, noTrunc, images, byParent, "")
+	jsonToText(&buffer, images, byParent, noTrunc, "")
 
 	return buffer.String()
 }
@@ -235,33 +235,33 @@ func filterImages(images *[]Image, byParent *map[string][]Image) (filteredImages
 	return filteredImages, filteredChildren
 }
 
-func jsonToText(buffer *bytes.Buffer, noTrunc bool, images []Image, byParent map[string][]Image, prefix string) {
+func jsonToText(buffer *bytes.Buffer, images []Image, byParent map[string][]Image, noTrunc bool, prefix string) {
 	var length = len(images)
 	if length > 1 {
 		for index, image := range images {
 			var nextPrefix string = ""
 			if index+1 == length {
-				PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
+				PrintTreeNode(buffer, image, noTrunc, prefix+"└─")
 				nextPrefix = "  "
 			} else {
-				PrintTreeNode(buffer, noTrunc, image, prefix+"├─")
+				PrintTreeNode(buffer, image, noTrunc, prefix+"├─")
 				nextPrefix = "│ "
 			}
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, noTrunc, subimages, byParent, prefix+nextPrefix)
+				jsonToText(buffer, subimages, byParent, noTrunc, prefix+nextPrefix)
 			}
 		}
 	} else {
 		for _, image := range images {
-			PrintTreeNode(buffer, noTrunc, image, prefix+"└─")
+			PrintTreeNode(buffer, image, noTrunc, prefix+"└─")
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, noTrunc, subimages, byParent, prefix+"  ")
+				jsonToText(buffer, subimages, byParent, noTrunc, prefix+"  ")
 			}
 		}
 	}
 }
 
-func PrintTreeNode(buffer *bytes.Buffer, noTrunc bool, image Image, prefix string) {
+func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, prefix string) {
 	var imageID string
 	if noTrunc {
 		imageID = image.Id

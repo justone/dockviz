@@ -123,7 +123,7 @@ func Test_Tree(t *testing.T) {
 		} else {
 			roots = collectRoots(im)
 		}
-		result := jsonToTree(treeTest.noTrunc, roots, byParent)
+		result := jsonToTree(roots, byParent, treeTest.noTrunc)
 
 		for _, regexp := range compileRegexps(t, treeTest.regexps) {
 			if !regexp.MatchString(result) {
