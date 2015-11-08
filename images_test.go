@@ -56,7 +56,12 @@ func Test_Dot(t *testing.T) {
 
 	for _, dotTest := range dotTests {
 		im, _ := parseImagesJSON([]byte(dotTest.json))
-		result := jsonToDot(im)
+		byParent := collectChildren(im)
+		roots := collectRoots(im)
+
+		// TODO: test start image limiting
+
+		result := jsonToDot(roots, byParent)
 
 		for _, regexp := range allRegex {
 			if !regexp.MatchString(result) {
@@ -109,7 +114,16 @@ func Test_Tree(t *testing.T) {
 
 	for _, treeTest := range treeTests {
 		im, _ := parseImagesJSON([]byte(treeTest.json))
-		result := jsonToTree(im, treeTest.startImage, treeTest.noTrunc)
+		byParent := collectChildren(im)
+		var roots []Image
+		if len(treeTest.startImage) > 0 {
+			startImage, _ := findStartImage(treeTest.startImage, im)
+			startImage.ParentId = ""
+			roots = []Image{*startImage}
+		} else {
+			roots = collectRoots(im)
+		}
+		result := jsonToTree(treeTest.noTrunc, roots, byParent)
 
 		for _, regexp := range compileRegexps(t, treeTest.regexps) {
 			if !regexp.MatchString(result) {

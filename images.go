@@ -85,36 +85,10 @@ func (x *ImagesCommand) Execute(args []string) error {
 	if imagesCommand.Tree || imagesCommand.Dot {
 		var startImage *Image
 		if len(args) > 0 {
+			startImage, err = findStartImage(args[0], images)
 
-			// attempt to find the start image, which can be specified as an
-			// image ID or a repository name
-			startImageArg := args[0]
-			startImageRepo := args[0]
-
-			// if tag is not defined, find by :latest tag
-			if strings.Index(startImageRepo, ":") == -1 {
-				startImageRepo = fmt.Sprintf("%s:latest", startImageRepo)
-			}
-
-		IMAGES:
-			for _, image := range *images {
-				// find by image id
-				if strings.Index(image.Id, startImageArg) == 0 {
-					startImage = &image
-					break IMAGES
-				}
-
-				// find by image name (name and tag)
-				for _, repotag := range image.RepoTags {
-					if repotag == startImageRepo {
-						startImage = &image
-						break IMAGES
-					}
-				}
-			}
-
-			if startImage == nil {
-				return fmt.Errorf("Unable to find image %s = %s.", startImageArg, startImageRepo)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -128,30 +102,20 @@ func (x *ImagesCommand) Execute(args []string) error {
 		}
 
 		// build helper map (image -> children)
-		var imagesByParent = make(map[string][]Image)
-		imagesByParent = collectChildren(images)
-
-		// image ids truncate
-		// initialize image informations
+		imagesByParent := collectChildren(images)
 
 		// filter images
 		if imagesCommand.OnlyLabelled {
 			*images, imagesByParent = filterImages(images, &imagesByParent)
 		}
 
-		var buffer bytes.Buffer
-
 		if imagesCommand.Tree {
-			jsonToText(&buffer, imagesCommand.NoTruncate, roots, imagesByParent, "")
+			fmt.Print(jsonToTree(imagesCommand.NoTruncate, roots, imagesByParent))
 		}
 		if imagesCommand.Dot {
-			buffer.WriteString("digraph docker {\n")
-			imagesToDot(&buffer, roots, imagesByParent)
-			buffer.WriteString(" base [style=invisible]\n}\n")
-			buffer.String()
+			fmt.Print(jsonToDot(roots, imagesByParent))
 		}
 
-		fmt.Print(buffer.String())
 	} else if imagesCommand.Short {
 		fmt.Printf(jsonToShort(images))
 	} else {
@@ -159,6 +123,62 @@ func (x *ImagesCommand) Execute(args []string) error {
 	}
 
 	return nil
+}
+
+func findStartImage(name string, images *[]Image) (*Image, error) {
+
+	var startImage *Image
+
+	// attempt to find the start image, which can be specified as an
+	// image ID or a repository name
+	startImageArg := name
+	startImageRepo := name
+
+	// if tag is not defined, find by :latest tag
+	if strings.Index(startImageRepo, ":") == -1 {
+		startImageRepo = fmt.Sprintf("%s:latest", startImageRepo)
+	}
+
+IMAGES:
+	for _, image := range *images {
+		// find by image id
+		if strings.Index(image.Id, startImageArg) == 0 {
+			startImage = &image
+			break IMAGES
+		}
+
+		// find by image name (name and tag)
+		for _, repotag := range image.RepoTags {
+			if repotag == startImageRepo {
+				startImage = &image
+				break IMAGES
+			}
+		}
+	}
+
+	if startImage == nil {
+		return nil, fmt.Errorf("Unable to find image %s = %s.", startImageArg, startImageRepo)
+	}
+
+	return startImage, nil
+}
+
+func jsonToTree(noTrunc bool, images []Image, byParent map[string][]Image) string {
+	var buffer bytes.Buffer
+
+	jsonToText(&buffer, noTrunc, images, byParent, "")
+
+	return buffer.String()
+}
+
+func jsonToDot(roots []Image, byParent map[string][]Image) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("digraph docker {\n")
+	imagesToDot(&buffer, roots, byParent)
+	buffer.WriteString(" base [style=invisible]\n}\n")
+
+	return buffer.String()
 }
 
 func collectChildren(images *[]Image) map[string][]Image {
