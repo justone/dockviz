@@ -25,6 +25,7 @@ type ImagesCommand struct {
 	Tree         bool `short:"t" long:"tree" description:"Show image information as tree. You can add a start image id or name -t/--tree [id/name]"`
 	Short        bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
 	NoTruncate   bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
+	Incremental  bool `short:"i" long:"incremental" description:"Display image size as incremental rather than cumulative."`
 	OnlyLabelled bool `short:"l" long:"only-labelled" description:"Print only labelled images/containers."`
 }
 
@@ -110,7 +111,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 		}
 
 		if imagesCommand.Tree {
-			fmt.Print(jsonToTree(roots, imagesByParent, imagesCommand.NoTruncate))
+			fmt.Print(jsonToTree(roots, imagesByParent, imagesCommand.NoTruncate, imagesCommand.Incremental))
 		}
 		if imagesCommand.Dot {
 			fmt.Print(jsonToDot(roots, imagesByParent))
@@ -163,10 +164,10 @@ IMAGES:
 	return startImage, nil
 }
 
-func jsonToTree(images []Image, byParent map[string][]Image, noTrunc bool) string {
+func jsonToTree(images []Image, byParent map[string][]Image, noTrunc bool, incremental bool) string {
 	var buffer bytes.Buffer
 
-	jsonToText(&buffer, images, byParent, noTrunc, "")
+	jsonToText(&buffer, images, byParent, noTrunc, incremental, "")
 
 	return buffer.String()
 }
@@ -235,33 +236,33 @@ func filterImages(images *[]Image, byParent *map[string][]Image) (filteredImages
 	return filteredImages, filteredChildren
 }
 
-func jsonToText(buffer *bytes.Buffer, images []Image, byParent map[string][]Image, noTrunc bool, prefix string) {
+func jsonToText(buffer *bytes.Buffer, images []Image, byParent map[string][]Image, noTrunc bool, incremental bool, prefix string) {
 	var length = len(images)
 	if length > 1 {
 		for index, image := range images {
 			var nextPrefix string = ""
 			if index+1 == length {
-				PrintTreeNode(buffer, image, noTrunc, prefix+"└─")
+				PrintTreeNode(buffer, image, noTrunc, incremental, prefix+"└─")
 				nextPrefix = "  "
 			} else {
-				PrintTreeNode(buffer, image, noTrunc, prefix+"├─")
+				PrintTreeNode(buffer, image, noTrunc, incremental, prefix+"├─")
 				nextPrefix = "│ "
 			}
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, subimages, byParent, noTrunc, prefix+nextPrefix)
+				jsonToText(buffer, subimages, byParent, noTrunc, incremental, prefix+nextPrefix)
 			}
 		}
 	} else {
 		for _, image := range images {
-			PrintTreeNode(buffer, image, noTrunc, prefix+"└─")
+			PrintTreeNode(buffer, image, noTrunc, incremental, prefix+"└─")
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, subimages, byParent, noTrunc, prefix+"  ")
+				jsonToText(buffer, subimages, byParent, noTrunc, incremental, prefix+"  ")
 			}
 		}
 	}
 }
 
-func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, prefix string) {
+func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, incremental bool, prefix string) {
 	var imageID string
 	if noTrunc {
 		imageID = image.Id
@@ -269,7 +270,14 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, prefix strin
 		imageID = truncate(image.Id)
 	}
 
-	buffer.WriteString(fmt.Sprintf("%s%s Virtual Size: %s", prefix, imageID, humanSize(image.VirtualSize)))
+	var size int64
+	if incremental {
+		size = image.Size
+	} else {
+		size = image.VirtualSize
+	}
+
+	buffer.WriteString(fmt.Sprintf("%s%s Virtual Size: %s", prefix, imageID, humanSize(size)))
 	if image.RepoTags[0] != "<none>:<none>" {
 		buffer.WriteString(fmt.Sprintf(" Tags: %s\n", strings.Join(image.RepoTags, ", ")))
 	} else {

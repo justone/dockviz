@@ -91,6 +91,9 @@ $ dockviz images -t
       └─cb12405ee8fa Virtual Size: 98.5 MB
         └─316b678ddf48 Virtual Size: 169.4 MB Tags: ubuntu:13.04, ubuntu:raring
 ```
+
+Only showing labelled images:
+
 ```
 $ dockviz images -t -l
 └─511136ea3c5a Virtual Size: 0.0 B
@@ -102,6 +105,41 @@ $ dockviz images -t -l
   │   └─f832a63e87a4 Virtual Size: 243.6 MB Tags: redis:latest
   └─02dae1c13f51 Virtual Size: 98.3 MB
     └─316b678ddf48 Virtual Size: 169.4 MB Tags: ubuntu:13.04, ubuntu:raring
+```
+
+Showing incremental size rather than cumulative:
+
+```
+$ dockviz images -t -i
+└─511136ea3c5a Virtual Size: 0.0 B
+  ├─f10ebce2c0e1 Virtual Size: 103.7 MB
+  │ └─82cdea7ab5b5 Virtual Size: 255.5 KB
+  │   └─5dbd9cb5a02f Virtual Size: 1.9 KB
+  │     └─74fe38d11401 Virtual Size: 105.7 MB Tags: ubuntu:12.04, ubuntu:precise
+  ├─ef519c9ee91a Virtual Size: 100.9 MB
+  │ └─07302703becc Virtual Size: 251.0 KB
+  │   └─cf8dc907452c Virtual Size: 1.9 KB
+  │     └─a7cf8ae4e998 Virtual Size: 70.1 MB Tags: ubuntu:12.10, ubuntu:quantal
+  │       ├─e18d8001204e Virtual Size: 29.4 KB
+  │       │ └─d0525208a46c Virtual Size: 71.0 B
+  │       │   └─59dac4bae93b Virtual Size: 71.2 MB
+  │       │     └─89541b3b35f2 Virtual Size: 269.3 MB
+  │       │       └─7dac4e98548e Virtual Size: 0.0 B
+  │       │         └─341d0cc3fac8 Virtual Size: 0.0 B
+  │       │           └─2f96171d2098 Virtual Size: 0.0 B
+  │       │             └─67b8b7262a67 Virtual Size: 1.9 MB
+  │       │               └─0fe9a2bc50fe Virtual Size: 656.0 B
+  │       │                 └─8c32832f07ba Virtual Size: 383.0 B
+  │       │                   └─cc4e1358bc80 Virtual Size: 0.0 B
+  │       │                     └─5c0d04fba9df Virtual Size: 0.0 B Tags: nate/mongodb:latest
+  │       └─398d592f2009 Virtual Size: 70.9 MB
+  │         └─0cd8e7f50270 Virtual Size: 1.4 MB
+  │           └─594b6f8e6f92 Virtual Size: 0.0 B
+  │             └─f832a63e87a4 Virtual Size: 0.0 B Tags: redis:latest
+  └─02dae1c13f51 Virtual Size: 98.3 MB
+    └─e7206bfc66aa Virtual Size: 190.0 KB
+      └─cb12405ee8fa Virtual Size: 1.9 KB
+        └─316b678ddf48 Virtual Size: 70.8 MB Tags: ubuntu:13.04, ubuntu:raring
 ```
 
 # Running
