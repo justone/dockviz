@@ -20,7 +20,7 @@ Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or 
 
 ## Containers
 
-Currently, containers are visualized with labeled lines for links.  Containers that aren't running are greyed out.
+Currently, containers are visualized with labelled lines for links.  Containers that aren't running are greyed out.
 
 ```
 $ dockviz containers -d | dot -Tpng -o containers.png
@@ -43,10 +43,10 @@ $ dockviz images --dot | dot -Tpng -o images.png
 ```
 $ dockviz images -d -l | dot -Tpng -o images.png
 OR
-$ dockviz images --dot -only-labeled | dot -Tpng -o images.png
+$ dockviz images --dot -only-labelled | dot -Tpng -o images.png
 ```
 
-![](sample/images_only_labeled.png "Image")
+![](sample/images_only_labelled.png "Image")
 
 Or in short form:
 
