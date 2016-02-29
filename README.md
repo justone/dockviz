@@ -43,7 +43,7 @@ $ dockviz images --dot | dot -Tpng -o images.png
 ```
 $ dockviz images -d -l | dot -Tpng -o images.png
 OR
-$ dockviz images --dot -only-labelled | dot -Tpng -o images.png
+$ dockviz images --dot --only-labelled | dot -Tpng -o images.png
 ```
 
 ![](sample/images_only_labelled.png "Image")
