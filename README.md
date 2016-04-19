@@ -10,7 +10,7 @@ different ways, to help you understand what's going on inside the system.
   * Set up an alias to run it from the (5.8 MB) docker image: 
 
   ```
-  alias dockviz="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
+  alias dockviz="docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
   ```
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
 
