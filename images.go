@@ -4,10 +4,13 @@ import (
 	"github.com/fsouza/go-dockerclient"
 
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -18,6 +21,8 @@ type Image struct {
 	VirtualSize int64
 	Size        int64
 	Created     int64
+	OrigId      string
+	CreatedBy   string
 }
 
 type ImagesCommand struct {
@@ -58,7 +63,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 			return err
 		}
 
-		clientImages, err := client.ListImages(docker.ListImagesOptions{All: true})
+		ver, err := getAPIVersion(client)
 		if err != nil {
 			if in_docker := os.Getenv("IN_DOCKER"); len(in_docker) > 0 {
 				return fmt.Errorf("Unable to access Docker socket, please run like this:\n  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz images <args>\nFor more help, run 'dockviz help'")
@@ -67,20 +72,38 @@ func (x *ImagesCommand) Execute(args []string) error {
 			}
 		}
 
-		var ims []Image
-		for _, image := range clientImages {
-			// fmt.Println(image)
-			ims = append(ims, Image{
-				image.ID,
-				image.ParentID,
-				image.RepoTags,
-				image.VirtualSize,
-				image.Size,
-				image.Created,
-			})
-		}
+		if ver[0] == 1 && ver[1] <= 21 {
+			clientImages, err := client.ListImages(docker.ListImagesOptions{All: true})
+			if err != nil {
+				return err
+			}
 
-		images = &ims
+			var ims []Image
+			for _, image := range clientImages {
+				ims = append(ims, Image{
+					image.ID,
+					image.ParentID,
+					image.RepoTags,
+					image.VirtualSize,
+					image.Size,
+					image.Created,
+					image.ID,
+					"",
+				})
+			}
+
+			images = &ims
+		} else {
+			clientImages, err := client.ListImages(docker.ListImagesOptions{})
+			if err != nil {
+				return err
+			}
+
+			images, err = synthesizeImagesFromHistory(client, clientImages)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if imagesCommand.Tree || imagesCommand.Dot {
@@ -124,6 +147,65 @@ func (x *ImagesCommand) Execute(args []string) error {
 	}
 
 	return nil
+}
+
+func synthesizeImagesFromHistory(client *docker.Client, images []docker.APIImages) (*[]Image, error) {
+	var newImages []Image
+	newImageRoster := make(map[string]*Image)
+	for _, image := range images {
+		var previous string
+		var vSize int64
+		history, err := client.ImageHistory(image.ID)
+		if err != nil {
+			return &newImages, err
+		}
+		for i := len(history) - 1; i >= 0; i-- {
+			var newID string
+			h := sha256.New()
+			h.Write([]byte(previous))
+			h.Write([]byte(history[i].CreatedBy))
+			h.Write([]byte(strconv.FormatInt(history[i].Created, 10)))
+			h.Write([]byte(strconv.FormatInt(history[i].Size, 10)))
+			newID = fmt.Sprintf("synth:%s", hex.EncodeToString(h.Sum(nil)))
+
+			vSize = vSize + history[i].Size
+			existingImage, ok := newImageRoster[newID]
+			if !ok {
+				newImageRoster[newID] = &Image{
+					newID,
+					previous,
+					history[i].Tags,
+					vSize,
+					history[i].Size,
+					history[i].Created,
+					history[i].ID,
+					history[i].CreatedBy,
+				}
+			} else {
+				if len(history[i].Tags) > 0 {
+					existingImage.RepoTags = append(existingImage.RepoTags, history[i].Tags...)
+				}
+			}
+			previous = newID
+		}
+	}
+
+	for _, image := range newImageRoster {
+		if len(image.RepoTags) == 0 {
+			image.RepoTags = []string{"<none>:<none>"}
+		} else {
+			visited := make(map[string]bool)
+			for _, tag := range image.RepoTags {
+				visited[tag] = true
+			}
+			image.RepoTags = []string{}
+			for tag, _ := range visited {
+				image.RepoTags = append(image.RepoTags, tag)
+			}
+		}
+		newImages = append(newImages, *image)
+	}
+	return &newImages, nil
 }
 
 func findStartImage(name string, images *[]Image) (*Image, error) {
@@ -265,9 +347,9 @@ func jsonToText(buffer *bytes.Buffer, images []Image, byParent map[string][]Imag
 func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, incremental bool, prefix string) {
 	var imageID string
 	if noTrunc {
-		imageID = image.Id
+		imageID = image.OrigId
 	} else {
-		imageID = truncate(image.Id)
+		imageID = truncate(image.OrigId, 12)
 	}
 
 	var size int64
@@ -303,8 +385,14 @@ func humanSize(raw int64) string {
 	return fmt.Sprintf("%.01f %s", rawFloat, sizes[ind])
 }
 
-func truncate(id string) string {
-	return id[0:12]
+func truncate(id string, length int) string {
+	if len(id) > length {
+		return id[0:length]
+	} else if len(id) > 0 {
+		return id
+	} else {
+		return ""
+	}
 }
 
 func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
@@ -322,12 +410,12 @@ func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
 func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Image) {
 	for _, image := range images {
 		if image.ParentId == "" {
-			buffer.WriteString(fmt.Sprintf(" base -> \"%s\" [style=invis]\n", truncate(image.Id)))
+			buffer.WriteString(fmt.Sprintf(" base -> \"%s\" [style=invis]\n", truncate(image.Id, 12)))
 		} else {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId), truncate(image.Id)))
+			buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId, 12), truncate(image.Id, 12)))
 		}
 		if image.RepoTags[0] != "<none>:<none>" {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id), truncate(image.Id), strings.Join(image.RepoTags, "\\n")))
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(image.Id, 12), strings.Join(image.RepoTags, "\\n")))
 		}
 		if subimages, exists := byParent[image.Id]; exists {
 			imagesToDot(buffer, subimages, byParent)

@@ -49,3 +49,17 @@ func connect() (*docker.Client, error) {
 	}
 	return client, nil
 }
+
+func getAPIVersion(client *docker.Client) ([]int, error) {
+	env, err := client.Version()
+	if err != nil {
+		return []int{}, err
+	}
+
+	ver, err := docker.NewAPIVersion(env.Get("ApiVersion"))
+	if err != nil {
+		return []int{}, err
+	}
+
+	return ver, nil
+}
