@@ -353,13 +353,16 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, incremental 
 	}
 
 	var size int64
+	var sizeLabel string
 	if incremental {
+		sizeLabel = "Size"
 		size = image.Size
 	} else {
+		sizeLabel = "Virtual Size"
 		size = image.VirtualSize
 	}
 
-	buffer.WriteString(fmt.Sprintf("%s%s Virtual Size: %s", prefix, imageID, humanSize(size)))
+	buffer.WriteString(fmt.Sprintf("%s%s %s: %s", prefix, imageID, sizeLabel, humanSize(size)))
 	if image.RepoTags[0] != "<none>:<none>" {
 		buffer.WriteString(fmt.Sprintf(" Tags: %s\n", strings.Join(image.RepoTags, ", ")))
 	} else {
