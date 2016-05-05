@@ -19,7 +19,7 @@ type GlobalOptions struct {
 var globalOptions GlobalOptions
 var parser = flags.NewParser(&globalOptions, flags.Default)
 
-var version = "v0.3"
+var version = "v0.4"
 
 func main() {
 	globalOptions.Version = func() {
