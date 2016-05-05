@@ -144,7 +144,7 @@ func jsonContainersToDot(containers *[]Container) string {
 			containerBackground = "paleturquoise"
 		}
 
-		buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"%s\",style=\"filled,rounded\"];\n", containerName, containerName, truncate(container.Id), containerBackground))
+		buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"%s\",style=\"filled,rounded\"];\n", containerName, containerName, truncate(container.Id, 12), containerBackground))
 	}
 
 	buffer.WriteString("}\n")
