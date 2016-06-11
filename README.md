@@ -142,6 +142,41 @@ $ dockviz images -t -i
         └─316b678ddf48 Virtual Size: 70.8 MB Tags: ubuntu:13.04, ubuntu:raring
 ```
 
+Showing non-human numbers, for precision:
+
+```
+$ dockviz images -t -i -c
+└─511136ea3c5a Size: 0
+  ├─f10ebce2c0e1 Size: 103675325
+  │ └─82cdea7ab5b5 Size: 255455
+  │   └─5dbd9cb5a02f Size: 1919
+  │     └─74fe38d11401 Size: 105667193 Tags: ubuntu:12.04, ubuntu:precise
+  ├─ef519c9ee91a Size: 100930679
+  │ └─07302703becc Size: 250998
+  │   └─cf8dc907452c Size: 1919
+  │     └─a7cf8ae4e998 Size: 70094270 Tags: ubuntu:12.10, ubuntu:quantal
+  │       ├─e18d8001204e Size: 29352
+  │       │ └─d0525208a46c Size: 71
+  │       │   └─59dac4bae93b Size: 71150930
+  │       │     └─89541b3b35f2 Size: 269335966
+  │       │       └─7dac4e98548e Size: 0
+  │       │         └─341d0cc3fac8 Size: 0
+  │       │           └─2f96171d2098 Size: 0
+  │       │             └─67b8b7262a67 Size: 1866379
+  │       │               └─0fe9a2bc50fe Size: 656
+  │       │                 └─8c32832f07ba Size: 383
+  │       │                   └─cc4e1358bc80 Size: 0
+  │       │                     └─5c0d04fba9df Size: 0 Tags: nate/mongodb:latest
+  │       └─398d592f2009 Size: 70917743
+  │         └─0cd8e7f50270 Size: 1418392
+  │           └─594b6f8e6f92 Size: 0
+  │             └─f832a63e87a4 Size: 0 Tags: redis:latest
+  └─02dae1c13f51 Size: 98348330
+    └─e7206bfc66aa Size: 190007
+      └─cb12405ee8fa Size: 1903
+        └─316b678ddf48 Size: 70822908 Tags: ubuntu:13.04, ubuntu:raring
+```
+
 # Running
 
 Dockviz supports connecting to the Docker daemon directly.  It defaults to `unix:///var/run/docker.sock`, but respects the following as well:

@@ -32,6 +32,13 @@ type ImagesCommand struct {
 	NoTruncate   bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
 	Incremental  bool `short:"i" long:"incremental" description:"Display image size as incremental rather than cumulative."`
 	OnlyLabelled bool `short:"l" long:"only-labelled" description:"Print only labelled images/containers."`
+	NoHuman      bool `short:"c" long:"no-human" description:"Don't humanize the sizes."`
+}
+
+type DisplayOpts struct {
+	NoTruncate  bool
+	Incremental bool
+	NoHuman     bool
 }
 
 var imagesCommand ImagesCommand
@@ -134,7 +141,12 @@ func (x *ImagesCommand) Execute(args []string) error {
 		}
 
 		if imagesCommand.Tree {
-			fmt.Print(jsonToTree(roots, imagesByParent, imagesCommand.NoTruncate, imagesCommand.Incremental))
+			dispOpts := DisplayOpts{
+				imagesCommand.NoTruncate,
+				imagesCommand.Incremental,
+				imagesCommand.NoHuman,
+			}
+			fmt.Print(jsonToTree(roots, imagesByParent, dispOpts))
 		}
 		if imagesCommand.Dot {
 			fmt.Print(jsonToDot(roots, imagesByParent))
@@ -246,10 +258,10 @@ IMAGES:
 	return startImage, nil
 }
 
-func jsonToTree(images []Image, byParent map[string][]Image, noTrunc bool, incremental bool) string {
+func jsonToTree(images []Image, byParent map[string][]Image, dispOpts DisplayOpts) string {
 	var buffer bytes.Buffer
 
-	jsonToText(&buffer, images, byParent, noTrunc, incremental, "")
+	jsonToText(&buffer, images, byParent, dispOpts, "")
 
 	return buffer.String()
 }
@@ -318,35 +330,35 @@ func filterImages(images *[]Image, byParent *map[string][]Image) (filteredImages
 	return filteredImages, filteredChildren
 }
 
-func jsonToText(buffer *bytes.Buffer, images []Image, byParent map[string][]Image, noTrunc bool, incremental bool, prefix string) {
+func jsonToText(buffer *bytes.Buffer, images []Image, byParent map[string][]Image, dispOpts DisplayOpts, prefix string) {
 	var length = len(images)
 	if length > 1 {
 		for index, image := range images {
 			var nextPrefix string = ""
 			if index+1 == length {
-				PrintTreeNode(buffer, image, noTrunc, incremental, prefix+"└─")
+				PrintTreeNode(buffer, image, dispOpts, prefix+"└─")
 				nextPrefix = "  "
 			} else {
-				PrintTreeNode(buffer, image, noTrunc, incremental, prefix+"├─")
+				PrintTreeNode(buffer, image, dispOpts, prefix+"├─")
 				nextPrefix = "│ "
 			}
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, subimages, byParent, noTrunc, incremental, prefix+nextPrefix)
+				jsonToText(buffer, subimages, byParent, dispOpts, prefix+nextPrefix)
 			}
 		}
 	} else {
 		for _, image := range images {
-			PrintTreeNode(buffer, image, noTrunc, incremental, prefix+"└─")
+			PrintTreeNode(buffer, image, dispOpts, prefix+"└─")
 			if subimages, exists := byParent[image.Id]; exists {
-				jsonToText(buffer, subimages, byParent, noTrunc, incremental, prefix+"  ")
+				jsonToText(buffer, subimages, byParent, dispOpts, prefix+"  ")
 			}
 		}
 	}
 }
 
-func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, incremental bool, prefix string) {
+func PrintTreeNode(buffer *bytes.Buffer, image Image, dispOpts DisplayOpts, prefix string) {
 	var imageID string
-	if noTrunc {
+	if dispOpts.NoTruncate {
 		imageID = image.OrigId
 	} else {
 		imageID = truncate(image.OrigId, 12)
@@ -354,7 +366,7 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, incremental 
 
 	var size int64
 	var sizeLabel string
-	if incremental {
+	if dispOpts.Incremental {
 		sizeLabel = "Size"
 		size = image.Size
 	} else {
@@ -362,7 +374,14 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, noTrunc bool, incremental 
 		size = image.VirtualSize
 	}
 
-	buffer.WriteString(fmt.Sprintf("%s%s %s: %s", prefix, imageID, sizeLabel, humanSize(size)))
+	var sizeStr string
+	if dispOpts.NoHuman {
+		sizeStr = strconv.FormatInt(size, 10)
+	} else {
+		sizeStr = humanSize(size)
+	}
+
+	buffer.WriteString(fmt.Sprintf("%s%s %s: %s", prefix, imageID, sizeLabel, sizeStr))
 	if image.RepoTags[0] != "<none>:<none>" {
 		buffer.WriteString(fmt.Sprintf(" Tags: %s\n", strings.Join(image.RepoTags, ", ")))
 	} else {
