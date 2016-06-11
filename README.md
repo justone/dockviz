@@ -1,3 +1,5 @@
+Follow [@dockviz](https://twitter.com/dockviz) for updates.
+
 # dockviz: Visualizing Docker Data
 
 This command takes Docker image and container information and presents in
