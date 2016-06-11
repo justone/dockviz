@@ -63,6 +63,22 @@ func (x *ImagesCommand) Execute(args []string) error {
 			return err
 		}
 
+		var ims []Image
+		for _, image := range *images {
+			ims = append(ims, Image{
+				image.Id,
+				image.ParentId,
+				image.RepoTags,
+				image.VirtualSize,
+				image.Size,
+				image.Created,
+				image.Id,
+				"",
+			})
+		}
+
+		images = &ims
+
 	} else {
 
 		client, err := connect()
