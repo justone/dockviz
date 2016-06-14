@@ -377,7 +377,7 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, dispOpts DisplayOpts, pref
 	if dispOpts.NoTruncate {
 		imageID = image.OrigId
 	} else {
-		imageID = truncate(image.OrigId, 12)
+		imageID = truncate(stripPrefix(image.OrigId), 12)
 	}
 
 	var size int64
@@ -433,6 +433,14 @@ func truncate(id string, length int) string {
 	}
 }
 
+func stripPrefix(id string) string {
+	if strings.Contains(id, ":") {
+		idParts := strings.Split(id, ":")
+		return idParts[len(idParts)-1]
+	}
+	return id
+}
+
 func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
 
 	var images []Image
@@ -453,9 +461,9 @@ func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Ima
 			buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId, 12), truncate(image.Id, 12)))
 		}
 		if image.RepoTags[0] != "<none>:<none>" {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(image.OrigId, 12), strings.Join(image.RepoTags, "\\n")))
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12), strings.Join(image.RepoTags, "\\n")))
 		} else {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(image.OrigId, 12)))
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12)))
 		}
 		if subimages, exists := byParent[image.Id]; exists {
 			imagesToDot(buffer, subimages, byParent)
