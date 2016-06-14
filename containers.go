@@ -58,7 +58,7 @@ func (x *ContainersCommand) Execute(args []string) error {
 		clientContainers, err := client.ListContainers(docker.ListContainersOptions{All: true})
 		if err != nil {
 			if in_docker := os.Getenv("IN_DOCKER"); len(in_docker) > 0 {
-				return fmt.Errorf("Unable to access Docker socket, please run like this:\n  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz containers <args>\nFor more help, run 'dockviz help'")
+				return fmt.Errorf("Unable to access Docker socket, please run like this:\n  docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz containers <args>\nFor more help, run 'dockviz help'")
 			} else {
 				return fmt.Errorf("Unable to connect: %s\nFor help, run 'dockviz help'", err)
 			}
