@@ -29,7 +29,7 @@ type ImagesCommand struct {
 	Dot          bool `short:"d" long:"dot" description:"Show image information as Graphviz dot. You can add a start image id or name -d/--dot [id/name]"`
 	Tree         bool `short:"t" long:"tree" description:"Show image information as tree. You can add a start image id or name -t/--tree [id/name]"`
 	Short        bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
-	NoTruncate   bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs."`
+	NoTruncate   bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs (only works with tree mode)."`
 	Incremental  bool `short:"i" long:"incremental" description:"Display image size as incremental rather than cumulative."`
 	OnlyLabelled bool `short:"l" long:"only-labelled" description:"Print only labelled images/containers."`
 	NoHuman      bool `short:"c" long:"no-human" description:"Don't humanize the sizes."`
