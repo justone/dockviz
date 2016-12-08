@@ -37,7 +37,7 @@ func (x *ContainersCommand) Execute(args []string) error {
 		return fmt.Errorf("error reading stdin stat", err)
 	}
 
-	if (stat.Mode() & os.ModeCharDevice) == 0 {
+	if globalOptions.Stdin && (stat.Mode()&os.ModeCharDevice) == 0 {
 		// read in stdin
 		stdin, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
