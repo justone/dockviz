@@ -14,6 +14,7 @@ type GlobalOptions struct {
 	TLSVerify bool   `long:"tlsverify" description:"Use TLS and verify the remote"`
 	Host      string `long:"host" short:"H" value-name:"unix:///var/run/docker.sock" description:"Docker host to connect to"`
 	Version   func() `long:"version" short:"v" description:"Display version information."`
+	Stdin     bool   `long:"stdin" description:"Enable reading image information from stdin (pre-Docker-1.11 only)"`
 }
 
 var globalOptions GlobalOptions

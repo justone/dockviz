@@ -189,12 +189,12 @@ Dockviz supports connecting to the Docker daemon directly.  It defaults to `unix
 Dockviz also supports receiving Docker image or container json data on standard input.
 
 ```
-$ curl -s http://localhost:4243/images/json?all=1 | dockviz images --tree
-$ curl -s http://localhost:4243/containers/json?all=1 | dockviz containers --dot | dot -Tpng -o containers.png
-$ echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | dockviz images --tree
-$ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | dockviz containers --dot | dot -Tpng -o containers.png
-$ echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | docker run -i nate/dockviz images --tree
-$ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | docker run -i nate/dockviz containers --dot | dot -Tpng -o containers.png
+$ curl -s http://localhost:4243/images/json?all=1 | dockviz --stdin images --tree
+$ curl -s http://localhost:4243/containers/json?all=1 | dockviz --stdin containers --dot | dot -Tpng -o containers.png
+$ echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | dockviz --stdin images --tree
+$ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | dockviz --stdin containers --dot | dot -Tpng -o containers.png
+$ echo -e "GET /images/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | docker run -i nate/dockviz --stdin images --tree
+$ echo -e "GET /containers/json?all=1 HTTP/1.0\r\n" | nc -U /var/run/docker.sock | sed '1,/^[[:space:]]*$/d' | docker run -i nate/dockviz --stdin containers --dot | dot -Tpng -o containers.png
 ```
 
 Note: GNU netcat doesn't support `-U` (UNIX socket) flag, so OpenBSD variant can be used.
