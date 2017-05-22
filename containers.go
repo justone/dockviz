@@ -24,7 +24,7 @@ type Container struct {
 type ContainersCommand struct {
 	Dot        bool `short:"d" long:"dot" description:"Show container information as Graphviz dot."`
 	NoTruncate bool `short:"n" long:"no-trunc" description:"Don't truncate the container IDs."`
-	//OnlyRunning bool `short:"r" long:"running" description:"Only show running containers, not Exited"`
+	OnlyRunning bool `short:"r" long:"running" description:"Only show running containers, not Exited"`
 }
 
 var containersCommand ContainersCommand
@@ -82,8 +82,7 @@ func (x *ContainersCommand) Execute(args []string) error {
 	}
 
 	if containersCommand.Dot {
-		//fmt.Printf(jsonContainersToDot(containers, containersCommand.OnlyRunning))
-		fmt.Printf(jsonContainersToDot(containers, true))
+		fmt.Printf(jsonContainersToDot(containers, containersCommand.OnlyRunning))
 	} else {
 		return fmt.Errorf("Please specify --dot")
 	}
@@ -140,7 +139,7 @@ func jsonContainersToDot(containers *[]Container,OnlyRunning bool) string {
 	LinkMap = make(map[string]string)
 
 	for _, container := range *containers {
-		//if OnlyRunning && strings.HasPrefix(container.Status,"Exit") { continue }
+		if OnlyRunning && strings.HasPrefix(container.Status,"Exit") { continue }
 
 		var containerName string
 
