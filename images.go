@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/fsouza/go-dockerclient"
+        "github.com/dustin/go-humanize"
 
 	"bytes"
 	"crypto/sha256"
@@ -455,6 +456,7 @@ func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
 
 func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Image) {
 	for _, image := range images {
+
 		if image.ParentId == "" {
 			buffer.WriteString(fmt.Sprintf(" base -> \"%s\" [style=invis]\n", truncate(image.Id, 12)))
 		} else {
@@ -463,7 +465,11 @@ func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Ima
 		if image.RepoTags[0] != "<none>:<none>" {
 			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12), strings.Join(image.RepoTags, "\\n")))
 		} else {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12)))
+			// show partial command and size to make up for
+			// the fact that since Docker 1.10 content addressing
+			// image ids are usually empty and report as <missing>
+			SanitizedCommand := SanitizeCommand(image.CreatedBy,24)
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12)+ "\n" + SanitizedCommand + "\n" + humanize.Bytes(uint64(image.Size)) ))
 		}
 		if subimages, exists := byParent[image.Id]; exists {
 			imagesToDot(buffer, subimages, byParent)
@@ -500,6 +506,24 @@ func jsonToShort(images *[]Image) string {
 	}
 
 	return buffer.String()
+}
+
+func SanitizeCommand(CommandStr string,MaxLength int) string {
+
+	temp := CommandStr
+	if(strings.HasPrefix(temp,"/bin/sh -c")) {
+	  temp = strings.TrimSpace(temp[10:])
+	}
+	if(strings.HasPrefix(temp,"#(nop)")) {
+	  temp = strings.TrimSpace(temp[6:])
+	}
+	temp = strings.Replace(temp,"\\"," ",-1)
+	temp = strings.Replace(temp,"\""," ",-1)
+	temp = strings.Replace(temp,"'"," ",-1)
+	//temp = strings.Replace(temp,"[","(",-1)
+	//temp = strings.Replace(temp,"]",")",-1)
+
+	return truncate(temp,MaxLength)
 }
 
 func init() {
