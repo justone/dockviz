@@ -123,12 +123,13 @@ func jsonContainersToDot(containers *[]Container,OnlyRunning bool) string {
 	buffer.WriteString("digraph docker {\n")
 
 	// build list of all primary container names
+	// this is so we can throw away links to 
+	// non-primary container name
 	var PrimaryContainerNames map[string]string
 	PrimaryContainerNames = make(map[string]string)
 	for _, container := range *containers {
 		for _, name := range container.Names {
 			if strings.Count(name, "/") == 1 {
-				//fmt.Printf("%s\n",name[1:])
 				PrimaryContainerNames[name[1:]] = name[1:]
 			}
 		}
@@ -154,7 +155,10 @@ func jsonContainersToDot(containers *[]Container,OnlyRunning bool) string {
 			nameParts := strings.Split(name, "/")
 			if len(nameParts) > 2 {
 				//fmt.Printf("\t%s to %s\n",containerName,nameParts[1])
+				// source and dest should be primary container names
 				if IsPrimaryContainerName(containerName,PrimaryContainerNames) && IsPrimaryContainerName(nameParts[1],PrimaryContainerNames) {
+
+				   // only create link if none exists already
 				   if _,ok := LinkMap[containerName + "-" + nameParts[1]]; !ok {
 				    LinkMap[containerName + "-" + nameParts[1]] = "exists"
 				    buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\" [label = \" %s\" ]\n", containerName, nameParts[1], nameParts[len(nameParts)-1] ))
