@@ -25,6 +25,7 @@ Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or 
 Currently, containers are visualized with labelled lines for links.  Containers that aren't running are greyed out.
 
 ```
+# show all containers
 $ dockviz containers -d | dot -Tpng -o containers.png
 
 # only show running containers
