@@ -184,6 +184,8 @@ $ dockviz images -t -i -c
 Dockviz supports connecting to the Docker daemon directly.  It defaults to `unix:///var/run/docker.sock`, but respects the following as well:
 
 * The `DOCKER_HOST`, `DOCKER_CERT_PATH`, and `DOCKER_TLS_VERIFY` environment variables, as set up by [boot2docker](http://boot2docker.io/) or [docker-machine](https://docs.docker.com/machine/).
+  * For example: docker run -e DOCKER_HOST='tcp://127.0.0.1:2375' nate/dockviz
+
 * Command line arguments (e.g. `--tlscacert`), like those that Docker itself supports.
 
 Dockviz also supports receiving Docker image or container json data on standard input.
@@ -206,6 +208,8 @@ See the [releases](https://github.com/justone/dockviz/releases) area for binarie
 # Build
 
 ```bash
-go get ./...
+# force static compilation
+export CGO_ENABLED=0
+go get
 go build
 ```
