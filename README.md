@@ -16,7 +16,7 @@ different ways, to help you understand what's going on inside the system.
   ```
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
 
-Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
+Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers (Debian: apt-get install graphviz).
 
 # Output Examples
 
@@ -26,6 +26,9 @@ Currently, containers are visualized with labelled lines for links.  Containers 
 
 ```
 $ dockviz containers -d | dot -Tpng -o containers.png
+
+# only show running containers
+$ dockviz containers -d -r | dot -Tpng -o containers.png
 ```
 
 ![](sample/containers.png "Container")
