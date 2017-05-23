@@ -216,8 +216,31 @@ See the [releases](https://github.com/justone/dockviz/releases) area for binarie
 # Build
 
 ```bash
-# force static compilation
+# install graphviz in host environment for rendering (Debian example)
+sudo apt-get install git graphviz -y
+
+# pull latest code
+cd $GOPATH
+git clone https://github.com/fabianlee/dockviz.git
+
+# force static compilation for go language
 export CGO_ENABLED=0
+
+# build go program
+cd dockviz
 go get
-go build
+go build -a
+
+# build docker image
+docker build --no-cache=true -t "fabianlee/dockviz:1.0" -t "fabianlee/dockviz:latest" .
+
+# push to docker hub
+docker login --username=fabianlee --password=xxxxxxx
+docker push fabianlee/dockviz
+
 ```
+
+
+
+
+
