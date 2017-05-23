@@ -12,7 +12,12 @@ different ways, to help you understand what's going on inside the system.
   * Set up an alias to run it from the (5.8 MB) docker image: 
 
   ```
+  # if docker client using local unix socket
   alias dockviz="docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
+
+  # if docker client using tcp
+  alias dockviz="docker run -it --rm -e DOCKER_HOST='tcp://127.0.0.1:2375' nate/dockviz"
+
   ```
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
 
@@ -188,7 +193,6 @@ $ dockviz images -t -i -c
 Dockviz supports connecting to the Docker daemon directly.  It defaults to `unix:///var/run/docker.sock`, but respects the following as well:
 
 * The `DOCKER_HOST`, `DOCKER_CERT_PATH`, and `DOCKER_TLS_VERIFY` environment variables, as set up by [boot2docker](http://boot2docker.io/) or [docker-machine](https://docs.docker.com/machine/).
-  * For example: docker run -e DOCKER_HOST='tcp://127.0.0.1:2375' nate/dockviz
 
 * Command line arguments (e.g. `--tlscacert`), like those that Docker itself supports.
 
