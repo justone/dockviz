@@ -221,7 +221,7 @@ sudo apt-get install git graphviz -y
 
 # pull latest code
 cd $GOPATH
-git clone https://github.com/fabianlee/dockviz.git
+git clone https://github.com/nate/dockviz.git
 
 # force static compilation for go language
 export CGO_ENABLED=0
@@ -232,11 +232,11 @@ go get
 go build -a
 
 # build docker image
-docker build --no-cache=true -t "fabianlee/dockviz:1.0" -t "fabianlee/dockviz:latest" .
+docker build --no-cache=true -t "nate/dockviz:1.0" -t "nate/dockviz:latest" .
 
 # push to docker hub
-docker login --username=fabianlee --password=xxxxxxx
-docker push fabianlee/dockviz
+docker login --username=mygituser --password=xxxxxxx
+docker push nate/dockviz
 
 ```
 
