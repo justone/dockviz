@@ -45,8 +45,6 @@ Image info is visualized with lines indicating parent images:
 
 ```
 $ dockviz images -d | dot -Tpng -o images.png
-OR
-$ dockviz images --dot | dot -Tpng -o images.png
 ```
 
 ![](sample/images.png "Image")
