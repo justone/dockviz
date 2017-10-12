@@ -50,6 +50,16 @@ $ dockviz images --dot --only-labelled | dot -Tpng -o images.png
 
 ![](sample/images_only_labelled.png "Image")
 
+Or as a treemap:
+
+```
+$ dockviz images -d | patchwork -Tpng -o treemap.png
+OR
+$ dockviz images --dot | patchwork -Tpng -o treemap.png
+```
+
+![](sample/treemap.png "Image")
+
 Or in short form:
 
 ```

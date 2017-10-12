@@ -405,6 +405,10 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, dispOpts DisplayOpts, pref
 	}
 }
 
+func megabytes(bytes int64) float64 {
+	return float64(bytes) / (1024 * 1024)
+}
+
 func humanSize(raw int64) string {
 	sizes := []string{"B", "KB", "MB", "GB", "TB"}
 
@@ -461,9 +465,9 @@ func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Ima
 			buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId, 12), truncate(image.Id, 12)))
 		}
 		if image.RepoTags[0] != "<none>:<none>" {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12), strings.Join(image.RepoTags, "\\n")))
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",area=%f,shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12), strings.Join(image.RepoTags, "\\n"), megabytes(image.Size)))
 		} else {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12)))
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\",area=%f]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12), megabytes(image.Size)))
 		}
 		if subimages, exists := byParent[image.Id]; exists {
 			imagesToDot(buffer, subimages, byParent)
