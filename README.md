@@ -15,8 +15,18 @@ different ways, to help you understand what's going on inside the system.
   alias dockviz="docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
   ```
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
+  * Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
+  * If you would like to visualize outside the container you will have to install [Graphviz](http://www.graphviz.org) first.
 
-Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
+  ```
+  apt-get update && apt-get install graphviz
+  ```
+
+  or
+
+  ```
+  brew update && brew install graphviz
+  ```
 
 # Output Examples
 
