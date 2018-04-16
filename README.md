@@ -9,7 +9,7 @@ different ways, to help you understand what's going on inside the system.
 
 1. Install dockviz.  Either:
   * Download the [latest release](https://github.com/justone/dockviz/releases).
-  * Set up an alias to run it from the (5.8 MB) docker image: 
+  * Set up an alias to run it from the (5.8 MB) docker image:
 
   ```
   # if docker client using local unix socket
@@ -20,8 +20,18 @@ different ways, to help you understand what's going on inside the system.
 
   ```
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
+  * Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
+  * If you would like to visualize outside the container you will have to install [Graphviz](http://www.graphviz.org) first.
 
-Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers (Debian: apt-get install graphviz).
+  ```
+  apt-get update && apt-get install graphviz
+  ```
+
+  or
+
+  ```
+  brew update && brew install graphviz
+  ```
 
 # Output Examples
 
