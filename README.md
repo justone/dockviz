@@ -11,27 +11,28 @@ different ways, to help you understand what's going on inside the system.
   * Download the [latest release](https://github.com/justone/dockviz/releases).
   * Set up an alias to run it from the (5.8 MB) docker image:
 
-  ```
-  # if docker client using local unix socket
-  alias dockviz="docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
+```
+# if docker client using local unix socket
+alias dockviz="docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
 
-  # if docker client using tcp
-  alias dockviz="docker run -it --rm -e DOCKER_HOST='tcp://127.0.0.1:2375' nate/dockviz"
+# if docker client using tcp
+alias dockviz="docker run -it --rm -e DOCKER_HOST='tcp://127.0.0.1:2375' nate/dockviz"
 
-  ```
+```
+
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
   * Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
   * If you would like to visualize outside the container you will have to install [Graphviz](http://www.graphviz.org) first.
 
-  ```
-  apt-get update && apt-get install graphviz
-  ```
+```
+apt-get update && apt-get install graphviz
+```
 
-  or
+or
 
-  ```
-  brew update && brew install graphviz
-  ```
+```
+brew update && brew install graphviz
+```
 
 # Output Examples
 
@@ -195,6 +196,9 @@ $ dockviz images -t -i -c
       └─cb12405ee8fa Size: 1903
         └─316b678ddf48 Size: 70822908 Tags: ubuntu:13.04, ubuntu:raring
 ```
+
+It is also possible to show the image's CreatedBy field, for help identifying
+image layers when they show up with "<missing>" image Ids.
 
 # Running
 
