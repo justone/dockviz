@@ -26,19 +26,21 @@ type Image struct {
 }
 
 type ImagesCommand struct {
-	Dot          bool `short:"d" long:"dot" description:"Show image information as Graphviz dot. You can add a start image id or name -d/--dot [id/name]"`
-	Tree         bool `short:"t" long:"tree" description:"Show image information as tree. You can add a start image id or name -t/--tree [id/name]"`
-	Short        bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
-	NoTruncate   bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs (only works with tree mode)."`
-	Incremental  bool `short:"i" long:"incremental" description:"Display image size as incremental rather than cumulative."`
-	OnlyLabelled bool `short:"l" long:"only-labelled" description:"Print only labelled images/containers."`
-	NoHuman      bool `short:"c" long:"no-human" description:"Don't humanize the sizes."`
+	Dot           bool `short:"d" long:"dot" description:"Show image information as Graphviz dot. You can add a start image id or name -d/--dot [id/name]"`
+	Tree          bool `short:"t" long:"tree" description:"Show image information as tree. You can add a start image id or name -t/--tree [id/name]"`
+	Short         bool `short:"s" long:"short" description:"Show short summary of images (repo name and list of tags)."`
+	NoTruncate    bool `short:"n" long:"no-trunc" description:"Don't truncate the image IDs (only works with tree mode)."`
+	Incremental   bool `short:"i" long:"incremental" description:"Display image size as incremental rather than cumulative."`
+	OnlyLabelled  bool `short:"l" long:"only-labelled" description:"Print only labelled images/containers."`
+	ShowCreatedBy bool `long:"show-created-by" description:"Show the image 'CreatedBy' to help identify layers."`
+	NoHuman       bool `short:"c" long:"no-human" description:"Don't humanize the sizes."`
 }
 
 type DisplayOpts struct {
-	NoTruncate  bool
-	Incremental bool
-	NoHuman     bool
+	NoTruncate    bool
+	Incremental   bool
+	NoHuman       bool
+	ShowCreatedBy bool
 }
 
 var imagesCommand ImagesCommand
@@ -156,16 +158,17 @@ func (x *ImagesCommand) Execute(args []string) error {
 			*images, imagesByParent = filterImages(images, &imagesByParent)
 		}
 
+		dispOpts := DisplayOpts{
+			imagesCommand.NoTruncate,
+			imagesCommand.Incremental,
+			imagesCommand.NoHuman,
+			imagesCommand.ShowCreatedBy,
+		}
 		if imagesCommand.Tree {
-			dispOpts := DisplayOpts{
-				imagesCommand.NoTruncate,
-				imagesCommand.Incremental,
-				imagesCommand.NoHuman,
-			}
 			fmt.Print(jsonToTree(roots, imagesByParent, dispOpts))
 		}
 		if imagesCommand.Dot {
-			fmt.Print(jsonToDot(roots, imagesByParent))
+			fmt.Print(jsonToDot(roots, imagesByParent, dispOpts))
 		}
 
 	} else if imagesCommand.Short {
@@ -282,11 +285,11 @@ func jsonToTree(images []Image, byParent map[string][]Image, dispOpts DisplayOpt
 	return buffer.String()
 }
 
-func jsonToDot(roots []Image, byParent map[string][]Image) string {
+func jsonToDot(roots []Image, byParent map[string][]Image, dispOpts DisplayOpts) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("digraph docker {\n")
-	imagesToDot(&buffer, roots, byParent)
+	imagesToDot(&buffer, roots, byParent, dispOpts)
 	buffer.WriteString(" base [style=invisible]\n}\n")
 
 	return buffer.String()
@@ -399,10 +402,12 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, dispOpts DisplayOpts, pref
 
 	buffer.WriteString(fmt.Sprintf("%s%s %s: %s", prefix, imageID, sizeLabel, sizeStr))
 	if image.RepoTags[0] != "<none>:<none>" {
-		buffer.WriteString(fmt.Sprintf(" Tags: %s\n", strings.Join(image.RepoTags, ", ")))
-	} else {
-		buffer.WriteString(fmt.Sprintf("\n"))
+		buffer.WriteString(fmt.Sprintf(" Tags: %s", strings.Join(image.RepoTags, ", ")))
 	}
+	if dispOpts.ShowCreatedBy {
+		buffer.WriteString(fmt.Sprintf(" (%s)", SanitizeCommand(image.CreatedBy, 100)))
+	}
+	buffer.WriteString(fmt.Sprintf("\n"))
 }
 
 func humanSize(raw int64) string {
@@ -453,20 +458,45 @@ func parseImagesJSON(rawJSON []byte) (*[]Image, error) {
 	return &images, nil
 }
 
-func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Image) {
+func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Image, dispOpts DisplayOpts) {
 	for _, image := range images {
+
 		if image.ParentId == "" {
 			buffer.WriteString(fmt.Sprintf(" base -> \"%s\" [style=invis]\n", truncate(image.Id, 12)))
 		} else {
 			buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId, 12), truncate(image.Id, 12)))
 		}
+
 		if image.RepoTags[0] != "<none>:<none>" {
 			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12), strings.Join(image.RepoTags, "\\n")))
 		} else {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12)))
+			labelParts := []string{truncate(stripPrefix(image.OrigId), 12)}
+			if dispOpts.ShowCreatedBy {
+				labelParts = append(labelParts, SanitizeCommand(image.CreatedBy, 30))
+			}
+
+			var size int64
+			var sizeLabel string
+			if dispOpts.Incremental {
+				sizeLabel = "Size"
+				size = image.Size
+			} else {
+				sizeLabel = "Virtual Size"
+				size = image.VirtualSize
+			}
+
+			var sizeStr string
+			if dispOpts.NoHuman {
+				sizeStr = strconv.FormatInt(size, 10)
+			} else {
+				sizeStr = humanSize(size)
+			}
+			labelParts = append(labelParts, fmt.Sprintf("%s: %s", sizeLabel, sizeStr))
+
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), strings.Join(labelParts, "\n")))
 		}
 		if subimages, exists := byParent[image.Id]; exists {
-			imagesToDot(buffer, subimages, byParent)
+			imagesToDot(buffer, subimages, byParent, dispOpts)
 		}
 	}
 }
@@ -500,6 +530,28 @@ func jsonToShort(images *[]Image) string {
 	}
 
 	return buffer.String()
+}
+
+func SanitizeCommand(CommandStr string, MaxLength int) string {
+
+	temp := CommandStr
+
+	// remove prefixes that don't add meaning
+	if strings.HasPrefix(temp, "/bin/sh -c") {
+		temp = strings.TrimSpace(temp[10:])
+	}
+	if strings.HasPrefix(temp, "#(nop)") {
+		temp = strings.TrimSpace(temp[6:])
+	}
+
+	// remove double and single quotes which make dot format invalid
+	temp = strings.Replace(temp, "\"", " ", -1)
+	temp = strings.Replace(temp, "'", " ", -1)
+
+	// remove double spaces inside
+	temp = strings.Join(strings.Fields(temp), " ")
+
+	return truncate(temp, MaxLength)
 }
 
 func init() {
