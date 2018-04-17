@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/dustin/go-humanize"
 	"github.com/fsouza/go-dockerclient"
-        "github.com/dustin/go-humanize"
 
 	"bytes"
 	"crypto/sha256"
@@ -468,8 +468,8 @@ func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Ima
 			// show partial command and size to make up for
 			// the fact that since Docker 1.10 content addressing
 			// image ids are usually empty and report as <missing>
-			SanitizedCommand := SanitizeCommand(image.CreatedBy,30)
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12)+ "\n" + SanitizedCommand + "\n" + humanize.Bytes(uint64(image.Size)) ))
+			SanitizedCommand := SanitizeCommand(image.CreatedBy, 30)
+			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\"]\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12)+"\n"+SanitizedCommand+"\n"+humanize.Bytes(uint64(image.Size))))
 		}
 		if subimages, exists := byParent[image.Id]; exists {
 			imagesToDot(buffer, subimages, byParent)
@@ -508,28 +508,27 @@ func jsonToShort(images *[]Image) string {
 	return buffer.String()
 }
 
-func SanitizeCommand(CommandStr string,MaxLength int) string {
+func SanitizeCommand(CommandStr string, MaxLength int) string {
 
 	temp := CommandStr
 
 	// remove prefixes that don't add meaning
-	if(strings.HasPrefix(temp,"/bin/sh -c")) {
-	  temp = strings.TrimSpace(temp[10:])
+	if strings.HasPrefix(temp, "/bin/sh -c") {
+		temp = strings.TrimSpace(temp[10:])
 	}
-	if(strings.HasPrefix(temp,"#(nop)")) {
-	  temp = strings.TrimSpace(temp[6:])
+	if strings.HasPrefix(temp, "#(nop)") {
+		temp = strings.TrimSpace(temp[6:])
 	}
 
-	// remove double and single quotes which make dot format invalid	
-	temp = strings.Replace(temp,"\""," ",-1)
-	temp = strings.Replace(temp,"'"," ",-1)
+	// remove double and single quotes which make dot format invalid
+	temp = strings.Replace(temp, "\"", " ", -1)
+	temp = strings.Replace(temp, "'", " ", -1)
 
 	// remove double spaces inside
-	temp = strings.Join(strings.Fields(temp)," ")
+	temp = strings.Join(strings.Fields(temp), " ")
 
-	return truncate(temp,MaxLength)
+	return truncate(temp, MaxLength)
 }
-
 
 func init() {
 	parser.AddCommand("images",
