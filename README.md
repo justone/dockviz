@@ -9,14 +9,30 @@ different ways, to help you understand what's going on inside the system.
 
 1. Install dockviz.  Either:
   * Download the [latest release](https://github.com/justone/dockviz/releases).
-  * Set up an alias to run it from the (5.8 MB) docker image: 
+  * Set up an alias to run it from the (5.8 MB) docker image:
 
-  ```
-  alias dockviz="docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
-  ```
+```
+# if docker client using local unix socket
+alias dockviz="docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock nate/dockviz"
+
+# if docker client using tcp
+alias dockviz="docker run -it --rm -e DOCKER_HOST='tcp://127.0.0.1:2375' nate/dockviz"
+
+```
+
 2. Visualize images by running `dockviz images -t`, which has similar output to `docker images -t`.
+  * Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
+  * If you would like to visualize outside the container you will have to install [Graphviz](http://www.graphviz.org) first.
 
-Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or short summary in the terminal.  Only Graphviz output has been implemented for containers.
+```
+apt-get update && apt-get install graphviz
+```
+
+or
+
+```
+brew update && brew install graphviz
+```
 
 # Output Examples
 
@@ -25,7 +41,11 @@ Image can be visualized as [Graphviz](http://www.graphviz.org), or as a tree or 
 Currently, containers are visualized with labelled lines for links.  Containers that aren't running are greyed out.
 
 ```
+# show all containers
 $ dockviz containers -d | dot -Tpng -o containers.png
+
+# only show running containers
+$ dockviz containers -d -r | dot -Tpng -o containers.png
 ```
 
 ![](sample/containers.png "Container")
@@ -36,8 +56,6 @@ Image info is visualized with lines indicating parent images:
 
 ```
 $ dockviz images -d | dot -Tpng -o images.png
-OR
-$ dockviz images --dot | dot -Tpng -o images.png
 ```
 
 ![](sample/images.png "Image")
@@ -189,11 +207,15 @@ $ dockviz images -t -i -c
         └─316b678ddf48 Size: 70822908 Tags: ubuntu:13.04, ubuntu:raring
 ```
 
+It is also possible to show the image's CreatedBy field, for help identifying
+image layers when they show up with "<missing>" image Ids.
+
 # Running
 
 Dockviz supports connecting to the Docker daemon directly.  It defaults to `unix:///var/run/docker.sock`, but respects the following as well:
 
 * The `DOCKER_HOST`, `DOCKER_CERT_PATH`, and `DOCKER_TLS_VERIFY` environment variables, as set up by [boot2docker](http://boot2docker.io/) or [docker-machine](https://docs.docker.com/machine/).
+
 * Command line arguments (e.g. `--tlscacert`), like those that Docker itself supports.
 
 Dockviz also supports receiving Docker image or container json data on standard input.
@@ -216,6 +238,30 @@ See the [releases](https://github.com/justone/dockviz/releases) area for binarie
 # Build
 
 ```bash
-go get ./...
-go build
+# install graphviz in host environment for rendering (Debian example)
+sudo apt-get install git graphviz -y
+
+# pull latest code
+cd $GOPATH
+git clone https://github.com/nate/dockviz.git
+
+# force static compilation for go language
+export CGO_ENABLED=0
+
+# build go program
+cd dockviz
+go get
+go build -a
+
+# build docker image
+docker build --no-cache=true -t "nate/dockviz:1.0" -t "nate/dockviz:latest" .
+
+# push to docker hub
+docker login --username=mygituser --password=xxxxxxx
+docker push nate/dockviz
+
 ```
+
+
+
+

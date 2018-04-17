@@ -1,4 +1,4 @@
-package main // import "github.com/justone/dockviz"
+package main
 
 import (
 	"fmt"

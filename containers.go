@@ -24,6 +24,7 @@ type Container struct {
 type ContainersCommand struct {
 	Dot        bool `short:"d" long:"dot" description:"Show container information as Graphviz dot."`
 	NoTruncate bool `short:"n" long:"no-trunc" description:"Don't truncate the container IDs."`
+	OnlyRunning bool `short:"r" long:"running" description:"Only show running containers, not Exited"`
 }
 
 var containersCommand ContainersCommand
@@ -81,7 +82,7 @@ func (x *ContainersCommand) Execute(args []string) error {
 	}
 
 	if containersCommand.Dot {
-		fmt.Printf(jsonContainersToDot(containers))
+		fmt.Printf(jsonContainersToDot(containers, containersCommand.OnlyRunning))
 	} else {
 		return fmt.Errorf("Please specify --dot")
 	}
@@ -115,24 +116,53 @@ func parseContainersJSON(rawJSON []byte) (*[]Container, error) {
 	return &containers, nil
 }
 
-func jsonContainersToDot(containers *[]Container) string {
+func jsonContainersToDot(containers *[]Container,OnlyRunning bool) string {
 
 	var buffer bytes.Buffer
 	buffer.WriteString("digraph docker {\n")
 
+	// build list of all primary container names
+	// this is so we can throw away links to 
+	// non-primary container name
+	var PrimaryContainerNames map[string]string
+	PrimaryContainerNames = make(map[string]string)
 	for _, container := range *containers {
+		for _, name := range container.Names {
+			if strings.Count(name, "/") == 1 {
+				PrimaryContainerNames[name[1:]] = name[1:]
+			}
+		}
+	}
+
+	// stores ony first value of link to avoid duplicates
+	var LinkMap map[string]string
+	LinkMap = make(map[string]string)
+
+	for _, container := range *containers {
+		if OnlyRunning && strings.HasPrefix(container.Status,"Exit") { continue }
 
 		var containerName string
 
+		//fmt.Printf("container status/Names %s/%s\n",container.Status,container.Names)
 		for _, name := range container.Names {
 			if strings.Count(name, "/") == 1 {
 				containerName = name[1:]
 			}
 		}
+	
 		for _, name := range container.Names {
 			nameParts := strings.Split(name, "/")
 			if len(nameParts) > 2 {
-				buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\" [label = \" %s\" ]\n", containerName, nameParts[1], nameParts[len(nameParts)-1]))
+				//fmt.Printf("\t%s to %s\n",containerName,nameParts[1])
+				// source and dest should be primary container names
+				if IsPrimaryContainerName(containerName,PrimaryContainerNames) && IsPrimaryContainerName(nameParts[1],PrimaryContainerNames) {
+
+				   // only create link if none exists already
+				   if _,ok := LinkMap[containerName + "-" + nameParts[1]]; !ok {
+				    LinkMap[containerName + "-" + nameParts[1]] = "exists"
+				    buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\" [label = \" %s\" ]\n", containerName, nameParts[1], nameParts[len(nameParts)-1] ))
+				  }
+				}
 
 			}
 		}
@@ -144,12 +174,17 @@ func jsonContainersToDot(containers *[]Container) string {
 			containerBackground = "paleturquoise"
 		}
 
-		buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",shape=box,fillcolor=\"%s\",style=\"filled,rounded\"];\n", containerName, containerName, truncate(container.Id, 12), containerBackground))
+		buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\\n%s\",shape=box,fillcolor=\"%s\",style=\"filled,rounded\"];\n", containerName, container.Image, containerName, truncate(container.Id, 12), containerBackground))
 	}
 
 	buffer.WriteString("}\n")
 
 	return buffer.String()
+}
+
+func IsPrimaryContainerName(Name string,PrimaryContainerNames map[string]string) bool {
+	_,ok := PrimaryContainerNames[Name]
+	return ok
 }
 
 func init() {
