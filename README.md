@@ -242,16 +242,17 @@ See the [releases](https://github.com/justone/dockviz/releases) area for binarie
 sudo apt-get install git graphviz -y
 
 # pull latest code
-cd $GOPATH
-git clone https://github.com/nate/dockviz.git
+mkdir -p $GOPATH/src/github.com/nate/ && cd $GOPATH/src/github.com/nate/
+git clone https://github.com/nate/dockviz.git && cd dockviz
 
 # force static compilation for go language
 export CGO_ENABLED=0
 
-# build go program
-cd dockviz
-go get
-go build -a
+# fetch vendored dependencies
+govendor sync
+
+# build
+go build
 
 # build docker image
 docker build --no-cache=true -t "nate/dockviz:1.0" -t "nate/dockviz:latest" .
@@ -261,7 +262,3 @@ docker login --username=mygituser --password=xxxxxxx
 docker push nate/dockviz
 
 ```
-
-
-
-
