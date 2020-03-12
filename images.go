@@ -471,34 +471,41 @@ func imagesToDot(buffer *bytes.Buffer, images []Image, byParent map[string][]Ima
 			buffer.WriteString(fmt.Sprintf(" \"%s\" -> \"%s\"\n", truncate(image.ParentId, 12), truncate(image.Id, 12)))
 		}
 
-		if image.RepoTags[0] != "<none>:<none>" {
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\\n%s\",area=%f,shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"];\n", truncate(image.Id, 12), truncate(stripPrefix(image.OrigId), 12), strings.Join(image.RepoTags, "\\n"), megabytes(image.Size)))
+		var style string
+
+		var size int64
+		var sizeLabel string
+		if dispOpts.Incremental {
+			sizeLabel = "Size"
+			size = image.Size
 		} else {
-			labelParts := []string{truncate(stripPrefix(image.OrigId), 12)}
-			if dispOpts.ShowCreatedBy {
-				labelParts = append(labelParts, SanitizeCommand(image.CreatedBy, 30))
-			}
-
-			var size int64
-			var sizeLabel string
-			if dispOpts.Incremental {
-				sizeLabel = "Size"
-				size = image.Size
-			} else {
-				sizeLabel = "Virtual Size"
-				size = image.VirtualSize
-			}
-
-			var sizeStr string
-			if dispOpts.NoHuman {
-				sizeStr = strconv.FormatInt(size, 10)
-			} else {
-				sizeStr = humanSize(size)
-			}
-			labelParts = append(labelParts, fmt.Sprintf("%s: %s", sizeLabel, sizeStr))
-
-			buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\",area=%f]\n", truncate(image.Id, 12), strings.Join(labelParts, "\n"), megabytes(image.Size)))
+			sizeLabel = "Virtual Size"
+			size = image.VirtualSize
 		}
+
+		var sizeStr string
+		if dispOpts.NoHuman {
+			sizeStr = strconv.FormatInt(size, 10)
+		} else {
+			sizeStr = humanSize(size)
+		}
+
+		labelParts := []string{truncate(stripPrefix(image.OrigId), 12)}
+
+		if dispOpts.ShowCreatedBy {
+			labelParts = append(labelParts, SanitizeCommand(image.CreatedBy, 30))
+		}
+
+		if image.RepoTags[0] != "<none>:<none>" {
+			labelParts = append(labelParts, strings.Join(image.RepoTags, "\\n"))
+			style = ",shape=box,fillcolor=\"paleturquoise\",style=\"filled,rounded\"";
+		}
+
+		labelParts = append(labelParts, fmt.Sprintf("%s: %s", sizeLabel, sizeStr))
+
+		buffer.WriteString(fmt.Sprintf(" \"%s\" [label=\"%s\",area=%f%s]\n", truncate(image.Id, 12), strings.Join(labelParts, "\n"), megabytes(image.Size),style))
+
+
 		if subimages, exists := byParent[image.Id]; exists {
 			imagesToDot(buffer, subimages, byParent, dispOpts)
 		}
