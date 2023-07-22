@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 )
@@ -40,7 +40,7 @@ func (x *ContainersCommand) Execute(args []string) error {
 
 	if globalOptions.Stdin && (stat.Mode()&os.ModeCharDevice) == 0 {
 		// read in stdin
-		stdin, err := ioutil.ReadAll(os.Stdin)
+		stdin, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("error reading all input", err)
 		}
