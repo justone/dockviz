@@ -407,7 +407,7 @@ func PrintTreeNode(buffer *bytes.Buffer, image Image, dispOpts DisplayOpts, pref
 	if dispOpts.ShowCreatedBy {
 		buffer.WriteString(fmt.Sprintf(" (%s)", SanitizeCommand(image.CreatedBy, 100)))
 	}
-	buffer.WriteString(fmt.Sprintf("\n"))
+	buffer.WriteString("\n")
 }
 
 func megabytes(bytes int64) float64 {
