@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -55,7 +55,7 @@ func (x *ImagesCommand) Execute(args []string) error {
 
 	if globalOptions.Stdin && (stat.Mode()&os.ModeCharDevice) == 0 {
 		// read in stdin
-		stdin, err := ioutil.ReadAll(os.Stdin)
+		stdin, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("error reading all input", err)
 		}
